@@ -1,0 +1,6 @@
+lxc delete --force postgres
+lxc delete --force nginx
+lxc delete --force nis
+
+sudo umount /mnt/cryptdata
+sudo cryptsetup close cryptdata

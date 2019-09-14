@@ -1,0 +1,167 @@
+# Wait for network service
+apt-get -y update
+apt-get -y upgrade
+apt-get -y install openjdk-8-jre-headless unzip
+apt-get -y install tomcat8 
+
+rm -rf /var/lib/tomcat8/webapps/*
+chown -R root.root /var/lib/tomcat8/webapps
+
+mkdir /opt/dhis2
+chown -R tomcat8.tomcat8 /opt/dhis2
+ufw allow from 192.168.0.2 to any port 8080  
+ufw enable
+
+########################################################################
+# Config files
+cat << EOF > /opt/dhis2/dhis.conf
+# ----------------------------------------------------------------------
+# Database connection for PostgreSQL
+# ----------------------------------------------------------------------
+
+# Hibernate SQL dialect
+connection.dialect = org.hibernate.dialect.PostgreSQLDialect
+
+# JDBC driver class
+connection.driver_class = org.postgresql.Driver
+
+# Database connection URL
+connection.url = jdbc:postgresql:xxxx
+
+# Database username
+connection.username = xxxx
+
+# Database password (sensitive)
+connection.password = xxxx
+
+# Database schema behavior, can be 'validate', 'update', 'create', 'create-drop'
+connection.schema = update
+
+# Max size of connection pool (default: 40)
+# connection.pool.max_size = 40
+
+# ----------------------------------------------------------------------
+# System
+# ----------------------------------------------------------------------
+
+# System mode for database read operations only, can be 'off', 'on'
+# system.read_only_mode = off
+
+# Session timeout in seconds, default is 3600
+# system.session.timeout = 3600
+
+# SQL view protected tables, can be 'on', 'off'
+# system.sql_view_table_protection = on
+
+# server.base.url = https://play.dhis2.org/dev
+
+# ----------------------------------------------------------------------
+# Encryption
+# ----------------------------------------------------------------------
+
+# Encryption password (sensitive)
+# encryption.password = xxxx
+
+# ----------------------------------------------------------------------
+# File store
+# ----------------------------------------------------------------------
+
+# File store provider, currently 'filesystem' and 'aws-s3' are supported
+# filestore.provider = filesystem
+
+# Directory / bucket name, refers to folder within DHIS2_HOME on file system, 'bucket' on AWS S3
+# filestore.container = files
+
+# Datacenter location (not required)
+# filestore.location = eu-west-1
+
+# Public identity / username
+# filestore.identity = dhis2-id
+
+# Secret key / password (sensitive)
+# filestore.secret = xxxx
+
+# ----------------------------------------------------------------------
+# LDAP
+# ----------------------------------------------------------------------
+
+# LDAP server URL
+# ldap.url = ldaps://300.20.300.20:636
+
+# LDAP manager user distinguished name
+# ldap.manager.dn = cn=JohnDoe,ou=Country,ou=Admin,dc=hisp,dc=org
+
+# LDAP manager user password (sensitive)
+# ldap.manager.password = xxxx
+
+# LDAP entry distinguished name search base
+# ldap.search.base = dc=hisp,dc=org
+
+# LDAP entry distinguished name filter
+# ldap.search.filter = (cn={0})
+
+# ----------------------------------------------------------------------
+# Node
+# ----------------------------------------------------------------------
+
+# Node identifier, optional, useful in clusters
+# node.id = 'node-1'
+
+# ----------------------------------------------------------------------
+# Analytics
+# ----------------------------------------------------------------------
+
+# Analytics server-side cache expiration in seconds
+# analytics.cache.expiration = 3600
+
+# ----------------------------------------------------------------------
+# System monitoring
+# ----------------------------------------------------------------------
+
+# System monitoring URL
+# system.monitoring.url =
+
+# System monitoring username
+# system.monitoring.username =
+
+# System monitoring password
+# system.monitoring.password =
+EOF
+
+chown root.tomcat8 /opt/dhis2/dhis.conf
+chmod 640 /opt/dhis2/dhis.conf
+
+######################################################################################
+cat << EOF > /etc/tomcat8/server.xml
+<?xml version="1.0" encoding="utf-8"?>
+
+<Server port="-1" >
+
+  <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+  <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+  <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+
+  <Service name="Catalina">
+  
+    <Executor name="tomcatThreadPool" namePrefix="tomcat-http-" 
+           maxThreads="100" minSpareThreads="10" /> 
+                    
+    <Connector port="8080" protocol="HTTP/1.1"  proxyPort="443" scheme="https"  
+        URIEncoding="UTF-8"
+        executor="tomcatThreadPool" connectionTimeout="20000" relaxedQueryChars="[,]"/>
+ 
+    <Engine name="Catalina" defaultHost="localhost">
+      <Host name="localhost"  appBase="webapps" 
+            unpackWARs="false" autoDeploy="false"
+            xmlValidation="false" xmlNamespaceAware="false" >
+        <!-- Mark HTTP as HTTPS forward from SSL termination at nginx proxy -->
+        <Valve className="org.apache.catalina.valves.RemoteIpValve"
+            remoteIpHeader="x-forwarded-for"
+            remoteIpProxiesHeader="x-forwarded-by"
+            protocolHeader="x-forwarded-proto"
+        />
+      </Host>
+    </Engine>
+  </Service>
+</Server>
+EOF

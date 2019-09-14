@@ -1,0 +1,56 @@
+#!/bin/sh
+#       ____  __  ______________
+#      / __ \/ / / /  _/ ___/__ \
+#     / / / / /_/ // / \__ \__/ /
+#    / /_/ / __  // / ___/ / __/
+#   /_____/_/ /_/___//____/____/
+#
+#   DHIS2 war deployment
+
+set -e
+
+TEMPWAR=/tmp/dhis.war
+
+while getopts :l:f: opt;
+do
+  case $opt in
+    f)
+      cp $OPTARG $TEMPWAR;
+      break;
+      ;;
+    l)
+      SOURCE=$OPTARG
+      ;;
+    \?)
+      echo "Invalid option -$opt" >&2
+      exit 1;
+      ;;
+    :)
+      echo "Option -$opt requires an argument." >&2
+      exit 1
+  esac
+done
+
+shift $(( $OPTIND-1 ))
+
+INSTANCE=$1
+
+# download war file if we don't have it
+test -f $TEMPWAR || wget -O $TEMPWAR $SOURCE
+unzip -tq $TEMPWAR || { echo "Corrupt war file: $TEMPWAR"; exit 1; }
+
+lxc exec $1 -- service tomcat8 stop
+# give it a chance to shutdown
+sleep 3
+
+# clean out existing webapp
+echo 'rm -rf /var/lib/tomcat8/webapps/*' | lxc exec $INSTANCE -- bash
+lxc file push $TEMPWAR $INSTANCE/.
+lxc exec $INSTANCE -- mkdir /var/lib/tomcat8/webapps/$INSTANCE
+lxc exec $INSTANCE -- unzip -d /var/lib/tomcat8/webapps/$INSTANCE /dhis.war
+lxc exec $INSTANCE -- rm /dhis.war
+lxc exec $INSTANCE -- service tomcat8 start
+
+rm $TEMPWAR || echo "Warning $TEMPWAR not deleted.  Please delete manually."
+
+

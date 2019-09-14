@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+#       ____  __  ______________
+#      / __ \/ / / /  _/ ___/__ \
+#     / / / / /_/ // / \__ \__/ /
+#    / /_/ / __  // / ___/ / __/
+#   /_____/_/ /_/___//____/____/
+#
+#   Script to deploy a dhis2 instance
+
+PROG=`basename $0`
+CREATEDB=true
+###############################################################
+usage() {
+  echo "Usage: $PROG [options] <instance> <ip> <postgres_container>"
+  echo "  instance: name of the dhis2 instance to create"
+  echo "Options:"
+  echo "  -h, --help       Display this help message"
+  echo "  -n               Do NOT create database for instance"
+}
+
+# main entry point
+echo checking options
+while getopts p:nh opt
+do
+  case $opt in
+    n) CREATEDB=false ;;
+    h) usage;;
+    *) echo "Error: Unknown parameter '$OPTARG'."
+        exit 1;;
+  esac
+done
+
+shift $(($OPTIND - 1))
+
+if [ "$#" -lt 3 ]; then
+  usage
+  exit 1
+fi
+
+NAME=$1
+IP=$2
+PG=$3
+
+lxc init ubuntu: $NAME
+
+# set ip addresses
+sudo lxc network attach lxdbr0 $NAME eth0 eth0
+sudo lxc config device set $NAME eth0 ipv4.address $IP
+
+lxc config set $NAME boot.autostart false
+
+lxc start $NAME 
+
+# wait for network to come up
+ping -c 3 $IP
+
+cat tomcat_setup | lxc exec $NAME -- bash
+
+# Append to bottom /etc/hosts
+sudo sed -i "/$IP/d" /etc/hosts
+sudo sed -i "$ a\
+	$IP $NAME" /etc/hosts
+
+if $CREATEDB; then
+	PASSWD=$(openssl rand -hex 20)
+
+	lxc exec $PG -- createuser $NAME
+	lxc exec $PG -- psql -c "ALTER user $NAME with PASSWORD '$PASSWD'" postgres 
+	lxc exec $PG -- createdb -O $NAME $NAME
+        lxc exec $PG -- psql -c "CREATE EXTENSION postgis" $NAME
+
+	lxc exec $NAME -- sed -i "s/^connection.username.*$/connection.username = $NAME/" /opt/dhis2/dhis.conf
+	lxc exec $NAME -- sed -i "s/^connection.password.*$/connection.password = $PASSWD/" /opt/dhis2/dhis.conf
+	lxc exec $NAME -- sed -i "s/^connection.url.*$/connection.url = jdbc:postgresql:\/\/$PG\/$NAME/" /opt/dhis2/dhis.conf
+
+	# Fixing pg_hba.conf permissions
+        IPREGEX=$(echo $IP |sed "s/\./\\\./g")
+        # get rid of any existing lines for the IP
+        lxc exec $PG -- sed -i "/$IPREGEX/d" /etc/postgresql/10/main/pg_hba.conf
+        lxc exec $PG -- sed -i "$ a\
+	  host $NAME $NAME $IP/32 md5" /etc/postgresql/10/main/pg_hba.conf
+	lxc exec $PG -- service postgresql reload
+	# add firewall rule
+	lxc exec $PG ufw allow proto tcp from $IP to any port 5432
+fi
+
+# if proxy is apache2; then ....
+cat <<EOF > /tmp/${NAME}
+<Location /${NAME}>
+  Require all granted
+  ProxyPass "http://${IP}:8080/${NAME}"
+  ProxyPassReverse "http://${IP}:8080/${NAME}"
+</LOcation>
+EOF
+
+lxc file push /tmp/${NAME} proxy/etc/apache2/upstream/${NAME}
+lxc exec proxy -- service apache2 restart

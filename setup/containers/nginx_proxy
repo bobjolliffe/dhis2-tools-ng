@@ -1,0 +1,7 @@
+apt-get -y update
+apt-get -y upgrade
+apt-get -y install nginx
+
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw enable

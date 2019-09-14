@@ -1,0 +1,14 @@
+# setting up apache2 proxy
+lxc exec $NAME -- service apache2 stop
+lxc exec $NAME -- certbot certonly -d $FQDN --standalone -m $EMAIL --agree-tos -n --no-eff-email
+lxc exec $NAME -- mkdir -p /etc/apache2/upstream
+
+# Replace placeholder values in template conf
+FQDN_REGEX=$(echo $FQDN |sed "s/\./\\\\\\\./g")
+echo $FQDN_REGEX
+#FQDN_REGEX='bigdata\\.dhis2\\.org'
+cat configs/apache-dhis2.conf |sed "s/FQDNREGEX/${FQDN_REGEX}/" |sed "s/FQDN/${FQDN}/" |sed "s/EMAIL/${EMAIL}/" > /tmp/apache-dhis2.conf
+
+lxc file push /tmp/apache-dhis2.conf $NAME/etc/apache2/sites-available/apache-dhis2.conf
+lxc exec $NAME -- a2ensite apache-dhis2
+lxc exec $NAME -- service apache2 restart

@@ -1,0 +1,25 @@
+{
+  "fqdn": "bigdata.dhis2.org",
+  "email": "bob@dhis2.org",
+  "network": "192.168.0.1/24", 
+  "monitoring": "munin",
+  "proxy": "apache2",
+  "containers": [
+    {
+      "name": "proxy",
+      "ip": "192.168.0.2",
+      "type": "apache_proxy"
+    },
+    {
+      "name": "postgres",
+      "ip": "192.168.0.20",
+      "type": "postgres"
+    },
+    { 
+      "name": "monitor",
+      "ip": "192.168.0.30",
+      "type": "munin_monitor"
+    }
+  ]
+}
+
