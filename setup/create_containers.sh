@@ -26,9 +26,13 @@ for CONTAINER in $CONTAINERS; do
     tmp=$(mktemp)
     sudo cat configs/ufw_proxy /etc/ufw/before.rules > $tmp
     sed -i "s/PROXY_IP/${IP}/g" $tmp
-    sed -i "s/LXD_NETWORK/${NETWORK}/g" $tmp
+    # FIX THIS
+    #sed -i "s/LXD_NETWORK/${NETWORK}/g" $tmp
+    sed -i "s/LXD_NETWORK/192.168.0.0\/24/g" $tmp
+
     sudo mv $tmp /etc/ufw/before.rules
     sudo chown root.root /etc/ufw/before.rules
+    sudo ufw reload
   fi
   for VAR in $ENVVARS; do
     KEY=$(echo $VAR | jq -r .key)
