@@ -1,0 +1,12 @@
+# if proxy is apache2; then ....
+cat <<EOF > /tmp/munin
+<Location /munin>
+  Require all granted
+  ProxyPass "http://${IP}/munin"
+  ProxyPassReverse "http://${IP}/munin"
+</LOcation>
+EOF
+
+lxc file push /tmp/munin proxy/etc/apache2/upstream/munin
+lxc exec proxy -- service apache2 reload
+
