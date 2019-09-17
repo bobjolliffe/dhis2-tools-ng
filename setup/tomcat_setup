@@ -9,6 +9,10 @@ chown -R root.root /var/lib/tomcat8/webapps
 
 mkdir /opt/dhis2
 chown -R tomcat8.tomcat8 /opt/dhis2
+
+echo "tomcat8" >> /etc/cron.deny
+echo "tomcat8" >> /at.deny
+
 ufw allow from 192.168.0.2 to any port 8080  
 ufw enable
 
