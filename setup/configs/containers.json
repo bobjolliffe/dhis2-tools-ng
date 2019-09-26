@@ -1,6 +1,6 @@
 {
-  "fqdn": "bigdata.dhis2.org",
-  "email": "bob@dhis2.org",
+  "fqdn":"ia-dev.tech",
+  "email": "cdadjo@hispwca.org",
   "network": "192.168.0.1/24", 
   "monitoring": "munin",
   "proxy": "apache2",

@@ -8,7 +8,7 @@ apt-get -y install certbot
 apt-get -y install apache2
 a2enmod ssl cache rewrite proxy_http headers
 
-a2dissite 000-default
+#a2dissite 000-default
 service apache2 stop
 
 ufw allow 80/tcp
