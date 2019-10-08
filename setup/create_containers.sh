@@ -22,7 +22,7 @@ for CONTAINER in $CONTAINERS; do
   lxc config device set $NAME eth0 ipv4.address $IP
 
   # create nat rules for proxy
-  if [[  $TYPE =~ .*_proxy ]] && sudo grep -v -q "^\*nat" /etc/ufw/before.rules; then 
+  if [[  $TYPE =~ .*_proxy ]] && [[ $(sudo grep '^\*nat' /etc/ufw/before.rules) != "*nat" ]]; then 
     tmp=$(mktemp)
     INTERFACE=$(ifconfig |grep  -o '^[a-z].*:' |head -1 |sed 's/.$//')
     sudo cat configs/ufw_proxy /etc/ufw/before.rules > $tmp
