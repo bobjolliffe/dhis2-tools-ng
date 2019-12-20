@@ -6,10 +6,10 @@ NAME=$1
 PG=$2
 
 lxc exec proxy -- rm /etc/apache2/upstream/${NAME}
-lxc stop $N
-lxc delete $N
+lxc stop $NAME
+lxc delete $NAME
 
-lxc exec ${PG} -- dropdb $N
-lxc exec ${PG} -- dropuser $N
+lxc exec ${PG} -- dropdb $NAME
+lxc exec ${PG} -- dropuser $NAME
 
 sudo sed -i "/.* $N$/d" /etc/hosts

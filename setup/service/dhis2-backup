@@ -8,14 +8,19 @@
 # http://wiki.postgresql.org/wiki/Automated_Backup_on_Linux
 ########################################################
 
-source /etc/dhis-env
 
-umask 077
+BACKUP_DIR=/var/pgbackups/postgres
+PLAIN_BACKUPS=dhis
+EXCLUDED="-T analytics_*" 
+#REMOTE=/media/NAS
+DAY_OF_WEEK_TO_KEEP=7
+WEEKS_TO_KEEP=6
+DAYS_TO_KEEP=7
 
 function perform_backups()
 {
   SUFFIX=$1
-  FINAL_BACKUP_DIR=$BACKUP_DIR/backup"`date +\%Y-\%m-\%d`$SUFFIX/"
+  FINAL_BACKUP_DIR=$BACKUP_DIR/backup"$(date +%Y%m%d_%H%M%S)$SUFFIX/"
   echo "Backupdir = $FINAL_BACKUP_DIR"
 
   if ! mkdir -p $FINAL_BACKUP_DIR; then
@@ -40,8 +45,6 @@ function perform_backups()
         mv $FINAL_BACKUP_DIR"$DBNAME".sql.gz.enc.in_progress $FINAL_BACKUP_DIR"$DBNAME".sql.gz.enc
      fi
   done
-  
-  # rsync -avq -e "ssh -p $SSH_PORT" $BACKUP_DIR/* $REMOTE
 }
 
 # MONTHLY BACKUPS
@@ -53,13 +56,11 @@ then
 	# find $BACKUP_DIR -maxdepth 1 -name "*-monthly" -exec rm -rf '{}' ';'
  
 	perform_backups "-monthly"
- 
-	exit 0;
 fi
  
 # WEEKLY BACKUPS
-DAY_OF_WEEK=`date +%u` #1-7 (Monday-Sunday)
-EXPIRED_DAYS=`expr $((($WEEKS_TO_KEEP * 7) + 1))`
+DAY_OF_WEEK=$(date +%u) #1-7 (Monday-Sunday)
+EXPIRED_DAYS=$(expr $((($WEEKS_TO_KEEP * 7) + 1)))
  
 if [ $DAY_OF_WEEK = $DAY_OF_WEEK_TO_KEEP ];
 then
@@ -67,12 +68,9 @@ then
 	find $BACKUP_DIR -maxdepth 1 -mtime +$EXPIRED_DAYS -name "*-weekly" -exec rm -rf '{}' ';'
  
 	perform_backups "-weekly"
- 
-	exit 0;
 fi
 
 # Delete daily backups 7 days old or more
 find $BACKUP_DIR -maxdepth 1 -mtime +$DAYS_TO_KEEP -name "*-daily" -exec rm -rf '{}' ';'
  
 perform_backups "-daily"
-
