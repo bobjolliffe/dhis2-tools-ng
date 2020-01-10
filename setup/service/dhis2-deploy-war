@@ -47,7 +47,7 @@ sleep 3
 echo 'rm -rf /var/lib/tomcat8/webapps/*' | lxc exec $INSTANCE -- bash
 lxc file push $TEMPWAR $INSTANCE/.
 lxc exec $INSTANCE -- mkdir /var/lib/tomcat8/webapps/$INSTANCE
-lxc exec $INSTANCE -- unzip -d /var/lib/tomcat8/webapps/$INSTANCE /dhis.war
+lxc exec $INSTANCE -- unzip -dq /var/lib/tomcat8/webapps/$INSTANCE /dhis.war
 lxc exec $INSTANCE -- rm /dhis.war
 lxc exec $INSTANCE -- service tomcat8 start
 
