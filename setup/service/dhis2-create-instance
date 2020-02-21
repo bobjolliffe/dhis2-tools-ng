@@ -65,7 +65,7 @@ then
 fi
 
 
-echo "Creating tomcat8 container $NAME"
+echo "Creating tomcat container $NAME"
 
 lxc init ubuntu: $NAME
 

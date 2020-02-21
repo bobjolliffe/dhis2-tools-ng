@@ -37,19 +37,19 @@ INSTANCE=$1
 
 # download war file if we don't have it
 test -f $TEMPWAR || wget -O $TEMPWAR $SOURCE
-unzip -t $TEMPWAR || { echo "Corrupt war file: $TEMPWAR"; exit 1; }
+unzip -t -q $TEMPWAR || { echo "Corrupt war file: $TEMPWAR"; exit 1; }
 
-lxc exec $1 -- service tomcat8 stop
+lxc exec $1 -- service tomcat9 stop
 # give it a chance to shutdown
 sleep 3
 
 # clean out existing webapp
 echo 'rm -rf /var/lib/tomcat8/webapps/*' | lxc exec $INSTANCE -- bash
 lxc file push $TEMPWAR $INSTANCE/.
-lxc exec $INSTANCE -- mkdir /var/lib/tomcat8/webapps/$INSTANCE
-lxc exec $INSTANCE -- unzip -d /var/lib/tomcat8/webapps/$INSTANCE /dhis.war
+lxc exec $INSTANCE -- mkdir /var/lib/tomcat9/webapps/$INSTANCE
+lxc exec $INSTANCE -- unzip -q -d /var/lib/tomcat9/webapps/$INSTANCE /dhis.war
 lxc exec $INSTANCE -- rm /dhis.war
-lxc exec $INSTANCE -- service tomcat8 start
+lxc exec $INSTANCE -- service tomcat9 start
 
 rm $TEMPWAR || echo "Warning $TEMPWAR not deleted.  Please delete manually."
 
