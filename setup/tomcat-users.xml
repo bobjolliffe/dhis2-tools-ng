@@ -4,6 +4,6 @@
               xsi:schemaLocation="http://tomcat.apache.org/xml tomcat-users.xsd"
               version="1.0">
   <role rolename="manager-status"/>
-  <user username="munin" password="XXXXXX" roles="manager-status" />
+  <user username="monitor" password="XXXXXX" roles="manager-status" />
 
 </tomcat-users>
