@@ -43,13 +43,15 @@ lxc exec $1 -- service tomcat9 stop
 # give it a chance to shutdown
 sleep 3
 
+echo "Deploying new war file"
 # clean out existing webapp
-echo 'rm -rf /var/lib/tomcat8/webapps/*' | lxc exec $INSTANCE -- bash
+echo 'rm -rf /var/lib/tomcat9/webapps/*' | lxc exec $INSTANCE -- bash
 lxc file push $TEMPWAR $INSTANCE/.
 lxc exec $INSTANCE -- mkdir /var/lib/tomcat9/webapps/$INSTANCE
 lxc exec $INSTANCE -- unzip -q -d /var/lib/tomcat9/webapps/$INSTANCE /dhis.war
 lxc exec $INSTANCE -- rm /dhis.war
 lxc exec $INSTANCE -- service tomcat9 start
+echo "$INSTANCE container starting"
 
 rm $TEMPWAR || echo "Warning $TEMPWAR not deleted.  Please delete manually."
 
