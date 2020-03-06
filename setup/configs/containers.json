@@ -1,0 +1,26 @@
+{
+    "fqdn":"li353-171.members.linode.com",
+    "email": "tuzoengelbert@gmail.com",
+    "network": "192.168.0.1/24", 
+    "monitoring": "munin",
+    "proxy": "nginx",
+    "containers": [
+      {
+        "name": "proxy",
+        "ip": "192.168.0.2",
+        "type": "nginx_proxy"
+      },
+      {
+        "name": "postgres",
+        "ip": "192.168.0.20",
+        "type": "postgres"
+      },
+      { 
+        "name": "monitor",
+        "ip": "192.168.0.30",
+        "type": "munin_monitor"
+      }
+    ]
+  }
+  
+  

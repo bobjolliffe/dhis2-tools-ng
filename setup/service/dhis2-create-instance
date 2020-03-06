@@ -108,16 +108,33 @@ if $CREATEDB; then
 	# add firewall rule
 	lxc exec $PG ufw allow proto tcp from $IP to any port 5432
 fi
-
-# if proxy is apache2; then ....
+hosts="$host";
+remote_addr="$remote_addr";
+proxy_add_x_forwarded_for="$proxy_add_x_forwarded_for";
+#if proxy is nginx ;
 cat <<EOF > /tmp/${NAME}
-<Location /${NAME}>
-  Require all granted
-  ProxyPass "http://${IP}:8080/${NAME}"
-  ProxyPassReverse "http://${IP}:8080/${NAME}"
-</Location>
+    # Proxy pass to servlet container
+
+    location /${NAME} {
+    proxy_pass                http://${IP}:8080/${NAME};
+    proxy_redirect            off;
+    proxy_set_header Host $hosts;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
 EOF
 
-lxc file push /tmp/${NAME} proxy/etc/apache2/upstream/${NAME}
+
+# if proxy is apache2; then ....
+#cat <<EOF > /tmp/${NAME}
+#<Location /${NAME}>
+#  Require all granted
+# ProxyPass "http://${IP}:8080/${NAME}"
+#  ProxyPassReverse "http://${IP}:8080/${NAME}"
+#</Location>
+#EOF
+
+lxc file push /tmp/${NAME} proxy/etc/nginx/upstream/${NAME}
 rm /tmp/${NAME}
-lxc exec proxy -- service apache2 restart
+lxc exec proxy -- service nginx restart
+
