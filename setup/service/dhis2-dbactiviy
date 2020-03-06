@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+Q="SELECT now()-xact_start,now()-query_start,datname,state,query from pg_stat_activity WHERE state != 'idle' AND datname != 'postgres' ORDER BY now()-xact_start DESC;"
+
+echo $Q | lxc exec postgres -- psql -t postgres
