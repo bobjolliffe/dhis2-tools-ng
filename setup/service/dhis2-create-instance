@@ -118,9 +118,9 @@ cat <<EOF > /tmp/${NAME}
     location /${NAME} {
     proxy_pass                http://${IP}:8080/${NAME};
     proxy_redirect            off;
-    proxy_set_header Host $hosts;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host \$hosts;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     }
 EOF
 
