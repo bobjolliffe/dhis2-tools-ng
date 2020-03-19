@@ -4,11 +4,15 @@
 source parse_config.sh
 
 # Setup encrypted disk if specified
+# NOTE: this feature not implemented yet
 if [[ ! -z $ENCDEV ]] ; then
   source ./disk_setup
 fi
 
 echo $CONTAINERS
+
+# some introspection
+DEFAULT_INTERFACE=$(ip route |grep default | awk '{print $5}')
 
 # Create and configure containers
 for CONTAINER in $CONTAINERS; do
@@ -18,19 +22,18 @@ for CONTAINER in $CONTAINERS; do
 
   echo "Creating $NAME of type $TYPE"
   lxc init ubuntu: $NAME
-  lxc network attach lxdbr0 $NAME eth0 eth0
+  lxc network attach lxdbr0 $NAME eth0 $DEFAULT_INTERFACE 
   lxc config device set $NAME eth0 ipv4.address $IP
 
   # create nat rules for proxy
   if [[  $TYPE =~ .*_proxy ]] && [[ $(sudo grep '^\*nat' /etc/ufw/before.rules) != "*nat" ]]; then 
     tmp=$(mktemp)
-    INTERFACE=$(ifconfig |grep  -o '^[a-z].*:' |head -1 |sed 's/.$//')
     sudo cat configs/ufw_proxy /etc/ufw/before.rules > $tmp
     sed -i "s/PROXY_IP/${IP}/g" $tmp
     # FIX THIS
     #sed -i "s/LXD_NETWORK/${NETWORK}/g" $tmp
     sed -i "s/LXD_NETWORK/192.168.0.0\/24/g" $tmp
-    sed -i "s/INTERFACE/$INTERFACE/" $tmp
+    sed -i "s/INTERFACE/$DEFAULT_INTERFACE/" $tmp
 
     sudo mv $tmp /etc/ufw/before.rules
     sudo chown root.root /etc/ufw/before.rules
