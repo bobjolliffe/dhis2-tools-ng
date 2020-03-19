@@ -2,7 +2,7 @@
 apt-get -y update
 apt-get -y upgrade
 apt-get -y install openjdk-8-jre-headless unzip
-apt-get -y install tomcat9 
+apt-get -y install tomcat9 tomcat9-admin 
 
 rm -rf /var/lib/tomcat9/webapps/*
 chown -R root.root /var/lib/tomcat9/webapps
@@ -13,7 +13,7 @@ chown -R tomcat.tomcat /opt/dhis2
 echo "tomcat" >> /etc/cron.deny
 echo "tomcat" >> /at.deny
 
-ufw allow from 192.168.0.2 to any port 8080  
+ufw allow proto tcp from 192.168.0.2 to any port 8080  
 ufw enable
 
 ########################################################################
