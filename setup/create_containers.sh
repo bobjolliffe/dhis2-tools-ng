@@ -57,7 +57,7 @@ for CONTAINER in $CONTAINERS; do
 
   if [[ $MONITORING == munin ]] && [[ $TYPE != munin_monitor ]]; then
 	lxc exec $NAME -- apt-get install -y munin-node
-        lxc exec $NAME -- sed -i -e "\$acidr_allow 192.168.0.30\n" /etc/munin/munin-node.conf
+        lxc exec $NAME -- sed -i -e "\$acidr_allow 192.168.0.30/32\n" /etc/munin/munin-node.conf
 	lxc exec $NAME -- ufw allow proto tcp from 192.168.0.30 to any port 4949
 	lxc exec $NAME -- service munin-node restart
   fi
@@ -70,7 +70,7 @@ for CONTAINER in $CONTAINERS; do
 
 done
 
-# If munin then tell the munin host about all the agents
+# If munin then tell the monitor about all the agents
 if [[ $MONITORING == munin ]]; then
   for CONTAINER in $CONTAINERS; do
     NAME=$(echo $CONTAINER | jq -r .name)
@@ -82,6 +82,12 @@ if [[ $MONITORING == munin ]]; then
       lxc exec monitor -- sed -i -e "\$a[$NAME.lxd]\n  address $IP\n  use_node_name yes\n" /etc/munin/munin.conf
     fi
   done
+  # Also monitor the host
+  apt-get install munin-node -y
+  echo "cidr_allow 192.168.0.30/32\n" >> /etc/munin/munin-node.conf
+  ufw allow proto tcp from 192.168.0.30 to any port 4949
+  service munin-node restart
+
   lxc exec monitor -- /etc/init.d/munin restart
 fi
 
