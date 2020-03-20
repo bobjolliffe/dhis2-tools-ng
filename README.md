@@ -23,14 +23,15 @@ Tools for setting up dhis2 on lxd
 	{
 	  "fqdn":"li621-168.members.linode.com",
 	  "email": "bob@dhis2.org",
-	  "tz": "Africa/Dar_es_Salaam",
+          "environment": {
+            "TZ": "Africa/Dar_es_Salaam"
+        },
           ....
-        }
 
 (Resist the temptation of changing other things below these 3 lines for now.  Some of what appear as configurable defaults are still a bit hard-coded.  Will improve that soon)
 
 5.  Run `sudo ./lxd_setup.sh`
-(this could be a good time to make tea or coffee)
+(this could be a good time to make tea or coffee .. it will take some minutes)
 
 6.  Configure your proxy certificate by running `sudo fetchcertbot`
 

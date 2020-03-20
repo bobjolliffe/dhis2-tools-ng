@@ -14,6 +14,14 @@ echo $CONTAINERS
 # some introspection
 DEFAULT_INTERFACE=$(ip route |grep default | awk '{print $5}')
 
+# set any environment variables for default profile in all containers
+# example TZ (timezone)
+for VAR in $ENVVARS; do
+  KEY=$(echo $VAR | jq -r .key)
+  VALUE=$(echo $VAR | jq -r .value)
+  lxc profile set default environment.$KEY $VALUE
+done
+
 # Create and configure containers
 for CONTAINER in $CONTAINERS; do
   NAME=$(echo $CONTAINER | jq -r .name)
@@ -39,11 +47,6 @@ for CONTAINER in $CONTAINERS; do
     sudo chown root.root /etc/ufw/before.rules
     sudo ufw reload
   fi
-  for VAR in $ENVVARS; do
-    KEY=$(echo $VAR | jq -r .key)
-    VALUE=$(echo $VAR | jq -r .value)
-    lxc config set $name environment.$KEY $VALUE
-  done
   lxc start $NAME
   # wait for network to come up
   ping -c 4 $IP
@@ -51,7 +54,14 @@ for CONTAINER in $CONTAINERS; do
   
   echo "Running setup from containers/$TYPE"
   cat containers/$TYPE | lxc exec $NAME -- bash
-  
+
+  if [[ $MONITORING == munin ]] && [[ $TYPE != munin_monitor ]]; then
+	lxc exec $NAME -- apt-get install -y munin-node
+        lxc exec $NAME -- sed -i -e "\$acidr_allow 192.168.0.30\n" /etc/munin/munin-node.conf
+	lxc exec $NAME -- ufw allow proto tcp from 192.168.0.30 to any port 4949
+	lxc exec $NAME -- service munin-node restart
+  fi
+
   # source any post setup scripts
   if [[ -f containers/${TYPE}_postsetup ]]; 
   then
@@ -59,6 +69,21 @@ for CONTAINER in $CONTAINERS; do
   fi
 
 done
+
+# If munin then tell the munin host about all the agents
+if [[ $MONITORING == munin ]]; then
+  for CONTAINER in $CONTAINERS; do
+    NAME=$(echo $CONTAINER | jq -r .name)
+    IP=$(echo $CONTAINER | jq -r .ip)
+    TYPE=$(echo $CONTAINER | jq -r .type)
+    echo "$NAME"
+    if [[ $TYPE != munin_monitor ]]; then
+      echo "adding $NAME to monitor"
+      lxc exec monitor -- sed -i -e "\$a[$NAME.lxd]\n  address $IP\n  use_node_name yes\n" /etc/munin/munin.conf
+    fi
+  done
+  lxc exec monitor -- /etc/init.d/munin restart
+fi
 
 # TODO - encrypted volume stuff
 

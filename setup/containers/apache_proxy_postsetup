@@ -9,7 +9,5 @@ cat configs/apache-dhis2.conf |sed "s/FQDNREGEX/${FQDN_REGEX}/" |sed "s/FQDN/${F
 lxc file push /tmp/apache-dhis2.conf $NAME/etc/apache2/sites-available/apache-dhis2.conf
 lxc exec $NAME -- a2ensite apache-dhis2
 
-echo "Apache2 is setup but not running"
-echo "Install certbot certificates and then start apache2"
-#lxc exec $NAME -- certbot certonly -d $FQDN --standalone -m $EMAIL --agree-tos -n --no-eff-email
-#lxc exec $NAME -- service apache2 restart
+lxc exec $NAME certbot certonly --non-interactive --standalone --agree-tos -m $EMAIL -d $FQDN
+lxc exec $NAME -- service apache2 restart
