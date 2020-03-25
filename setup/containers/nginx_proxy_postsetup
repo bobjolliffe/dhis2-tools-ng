@@ -1,0 +1,18 @@
+#setting nginx proxy
+lxc exec $NAME -- service nginx stop
+lxc exec $NAME -- mkdir -p /etc/nginx/upstream
+
+# Replace placeholder values in template conf
+cat configs/nginx-dhis2.conf |sed "s/FQDN/${FQDN}/" > /tmp/nginx-dhis2.conf
+
+lxc file push /tmp/nginx-dhis2.conf $NAME/etc/nginx/conf.d/nginx-dhis2.conf
+lxc exec $NAME -- service nginx start
+
+echo "nginx setup running"
+echo "Install certbot certificates and then start nginx"
+lxc exec $NAME -- add-apt-repository ppa:certbot/certbot
+lxc exec $NAME -- apt install python-certbot-nginx
+echo "Updating firewall"
+lxc exec $NAME -- ufw allow 'Nginx Full'
+lxc exec $NAME -- certbot certonly -d $FQDN --standalone -m $EMAIL --agree-tos -n --no-eff-email
+lxc exec $NAME -- service nginx restart
