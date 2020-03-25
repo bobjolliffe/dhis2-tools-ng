@@ -135,7 +135,7 @@ cat <<EOF > /tmp/${NAME}
 </Location>
 EOF
 
-lxc file push /tmp/${NAME} proxy/etc/nginx/upstream/${NAME}
+lxc file push /tmp/${NAME} proxy/etc/apache2/upstream/${NAME}
 rm /tmp/${NAME}
-lxc exec proxy -- service nginx restart
+lxc exec proxy -- service apache2 restart
 
