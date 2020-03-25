@@ -159,8 +159,8 @@ cat << EOF > /etc/tomcat9/server.xml
     <Executor name="tomcatThreadPool" namePrefix="tomcat-http-" 
            maxThreads="100" minSpareThreads="10" /> 
                     
-    <Connector port="8080" protocol="HTTP/1.1"  
-        URIEncoding="UTF-8"
+    <Connector port="8080" protocol="HTTP/1.1"  proxyPort="443" scheme="https" 
+        URIEncoding="UTF-8" 
         executor="tomcatThreadPool" connectionTimeout="20000" relaxedQueryChars="[,]"/>
  
     <Engine name="Catalina" defaultHost="localhost">
