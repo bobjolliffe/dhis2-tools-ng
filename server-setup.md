@@ -78,7 +78,7 @@ This is a brief guide to prepare your new server (Server Birthing process and cl
   sudo apt-get install git
   ```
   
-  > At this point your server is ready for DHIS2 installation and made secure. Proceed to the next stage as described in the [README.md](https://github.com/socaya/dhis2-tools-ng/blob/patch-1/README.md)
+  > At this point your server is ready for DHIS2 installation and made secure. Proceed to the next stage as described in the [README.md](./README.md)
 
      
 
