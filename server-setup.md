@@ -66,7 +66,12 @@ This is a brief guide to prepare your new server (Server Birthing process and cl
      sudo ufw enable
      sudo ufw limit 822/tcp comment 'SSH Port rate limit' 
      ```
-    
+     Restart or reload firewall (ufw) and SSH services using the commands below
+      ```
+      sudo ufw disable
+      sudo systemctl restart sshd
+      sudo ufw enable
+      ```
 
      
 
