@@ -1,6 +1,6 @@
-# DHIS2 Installation on a Blank Server
+# DHIS2 Installation on a Server Server
 
-> *This guide is applicable to debian or Ubuntu Operating systems.*
+> *This guide is applicable to debian or Ubuntu Operating systems. Tested tow work on Ubuntu 18.04*
 
 This is a brief guide to prepare your new server (Server Birthing process and cleanup) for DHIS2 installation.
 
@@ -48,7 +48,13 @@ This is a brief guide to prepare your new server (Server Birthing process and cl
      ```
      cat ~/.ssh/id_rsa.pub | ssh <username>@server-ip 'cat >> ~/.ssh/authorized_keys'
      ```
-     Using your prefered SSHL client software, confirm that you can login using the SSH Key before proceding to the next section.
+     Change the access permission to the authorized_keys using the command below
+     ```
+     sudo chmod 0600 ~/.ssh/authorized_keys
+     ```
+     
+     Using your prefered SSHL client software, confirm that you can login using the SSH Key before proceding to the next section. 
+     > Logout of the server and login back to the server using SSH key
      
      The next step is for us to prevent root access and password Authentication using SSH. This will allow us to only accept login using SSH keys for a user except root.
      
@@ -56,12 +62,29 @@ This is a brief guide to prepare your new server (Server Birthing process and cl
      - `PasswordAuthentication yes` to `PassswordAuthentication no`
      - `PermitRootLogin yes` to `PermitRootLogin no`
      
+     Run the command below to effect the new changes for SSH server
+     
+     ```
+     sudo systemctl restart sshd
+     ```
+     
      Verify that root login is no longer allowed and that `<username>` can login using public key and NOT using password
+      > Logout of the server and login back to the server using SSH key for the  new `<username>` account. 
+      > If you protected your key, you might be asked to provide the password for Key. Note that this password is not a normal system user password
      
      Next step then is to change the SSH default port 22 to any number below 1024. Numbers below 1024 are recommended because they will require root access to execute tasks.
      To change the port number, edit the SSH configuration file `/etc/ssh/sshd_config` and uncomment the `#Port 22` to `Port 22` then change the 22 to any number of your choice, e.g. 822. Your new Port will be `Port 822`. Save and exit.
      
-     Next, enable firewall on the server and allow the new SSH port 822 using the commands below
+     Run the command below to effect the new changes for SSH server
+     
+     ```
+     sudo systemctl restart sshd
+     ```
+     
+     verify that your new port works before proceding to the next stage. 
+      > Logout of the server and login back to the server using SSH key and through new SSH port e.g. 822
+     
+     Next if everything works, enable firewall on the server and allow the new SSH port 822 using the commands below
      ```
      sudo ufw enable
      sudo ufw limit 822/tcp comment 'SSH Port rate limit' 
@@ -69,7 +92,6 @@ This is a brief guide to prepare your new server (Server Birthing process and cl
      Restart or reload firewall (ufw) and SSH services using the commands below
       ```
       sudo ufw disable
-      sudo systemctl restart sshd
       sudo ufw enable
       ```
   * ### Install git on your server
