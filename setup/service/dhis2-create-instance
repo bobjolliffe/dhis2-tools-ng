@@ -127,15 +127,15 @@ EOF
 
 
 # if proxy is apache2; then ....
-#cat <<EOF > /tmp/${NAME}
-#<Location /${NAME}>
-#  Require all granted
-# ProxyPass "http://${IP}:8080/${NAME}"
-#  ProxyPassReverse "http://${IP}:8080/${NAME}"
-#</Location>
-#EOF
+cat <<EOF > /tmp/${NAME}
+<Location /${NAME}>
+  Require all granted
+  ProxyPass "http://${IP}:8080/${NAME}"
+  ProxyPassReverse "http://${IP}:8080/${NAME}"
+</Location>
+EOF
 
-lxc file push /tmp/${NAME} proxy/etc/nginx/upstream/${NAME}
+lxc file push /tmp/${NAME} proxy/etc/apache2/upstream/${NAME}
 rm /tmp/${NAME}
-lxc exec proxy -- service nginx restart
+lxc exec proxy -- service apache2 restart
 

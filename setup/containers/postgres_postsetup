@@ -1,0 +1,2 @@
+lxc file push configs/dhispg.conf $NAME/etc/postgresql/10/main/conf.d/dhispg.conf
+lxc restart $NAME

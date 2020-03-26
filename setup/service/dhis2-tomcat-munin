@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#
+# Configures munin plugin on tomcat container
+
+INSTANCE=$1
+MONITOR=$2
+
+IP=$(lxc exec $INSTANCE -- ip addr show eth0 | grep -Po 'inet \K[\d.]+')
+MANAGER_PASSWD=$(openssl rand -hex 20)
+MUNIN_CONF=/etc/munin/plugin-conf.d/munin-node
+
+# base munin-node install
+lxc exec $INSTANCE -- apt-get install -y munin-node libwww-perl libxml-simple-perl
+lxc exec $INSTANCE -- sed -i -e "\$acidr_allow 192.168.0.30/32\n" /etc/munin/munin-node.conf
+lxc exec $INSTANCE -- ufw allow proto tcp from 192.168.0.30 to any port 4949
+
+# configure tomcat plugin
+lxc file push /usr/local/etc/dhis/tomcat-users.xml $INSTANCE/etc/tomcat9/tomcat-users.xml
+lxc exec $INSTANCE -- sed -i "s/XXXXXX/$MANAGER_PASSWD/" /etc/tomcat9/tomcat-users.xml
+
+lxc exec $INSTANCE -- sed -i "$ a " $MUNIN_CONF
+lxc exec $INSTANCE -- sed -i "$ a [tomcat_*]" $MUNIN_CONF
+lxc exec $INSTANCE -- sed -i "$ a env.ports 8080" $MUNIN_CONF
+lxc exec $INSTANCE -- sed -i "$ a env.request /manager/status?XML=true" $MUNIN_CONF
+lxc exec $INSTANCE -- sed -i "$ a env.connector \"http-nio-8080\"" $MUNIN_CONF
+lxc exec $INSTANCE -- sed -i "$ a env.user monitor" $MUNIN_CONF
+lxc exec $INSTANCE -- sed -i "$ a env.password $MANAGER_PASSWD" $MUNIN_CONF
+
+lxc exec $INSTANCE -- chown root.tomcat /etc/tomcat9/tomcat-users.xml
+lxc exec $INSTANCE -- chmod 640 /etc/tomcat9/tomcat-users.xml
+
+lxc exec $INSTANCE -- ln -s /usr/share/munin/plugins/tomcat_access /etc/munin/plugins/tomcat_access
+lxc exec $INSTANCE -- ln -s /usr/share/munin/plugins/tomcat_jvm /etc/munin/plugins/tomcat_jvm
+lxc exec $INSTANCE -- ln -s /usr/share/munin/plugins/tomcat_threads /etc/munin/plugins/tomcat_threads
+lxc exec $INSTANCE -- ln -s /usr/share/munin/plugins/tomcat_volume /etc/munin/plugins/tomcat_volume
+
+# Let monitor know about this node
+lxc exec $MONITOR -- sed -i -e "\$a[$INSTANCE.lxd]\n  address $IP\n  use_node_name yes\n" /etc/munin/munin.conf
+
+ufw allow proto tcp from 192.168.0.30 to any port 4949
+lxc exec $INSTANCE -- service munin-node restart
+lxc exec $MONITOR -- /etc/init.d/munin restart
