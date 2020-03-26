@@ -6,7 +6,6 @@ NAME=$1
 PG=$2
 
 lxc exec proxy -- rm /etc/apache2/upstream/${NAME}
-lxc exec proxy -- rm /etc/nginx/upstream/${NAME}
 lxc stop $NAME
 lxc delete $NAME
 
