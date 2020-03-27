@@ -2,6 +2,11 @@
 
 Tools for setting up dhis2 on lxd.  A very short install guide.
 
+Note that this guide is supplementary to the Implementation Guide.  Here we use that guide as a 
+configuration reference, and implement those configurations into a set of automated tools for
+installation and management.  It is not the intention here to repeat all the detailed explanation
+that is provided there.
+
 ## Prerequisites you need before you start:
 
 1.  Your fully qualified domain name (FQDN), like `hmis.mygov.org`. Note this is just the name, not a URL like `https:\\hmis.mygov.org` This setup is designed for production use so it is assumed it will be using SSL/TLS which further assumes that you have a FQDN which will properly resolve to the public IP that you are exposing service on.  Do not proceed further until you have sorted this.
@@ -161,6 +166,36 @@ sudo lxc start covid19
 (TODO: install postgresql munin plugin)
 
 ### DHIS2 instances
+
+When you install a dhis2 instance (with `dhis2-create-instance`), a lxc container is created with
+a standard system installation of tomcat 9.  Whereas this is sufficient to run a dhis2 application
+war file (see `dhis2-deploy-war` above), you will want to make some adjustments to the memory settings and perhaps other configuration tweaks.
+
+## File locations
+The following are locations within the container that you will find common files for DHIS2 tweaking:
+1.  /etc/default/tomcat9 - this is where environment variables such as JAVA_OPTs are kept 
+2.  /etc/tomcat9/server.xml - you shouldn't need to do anything in here.  Unless you want to change the http pool size
+3.  /opt/dhis2 - this is where your DHIS2_HOME is.  Most important file in there is dhis.conf.
+
+### Environment settings (/etc/default/tomcat9)
+The main thing to set in here is the JAVA_OPTS.  Following our example, we have 16GB of RAM left,
+so we might want to give 8GB to our covid19 instance:
+
+`JAVA_OPTS="-Djava.awt.headless=true -XX:+UseG1GC  -Xmx8G -Xms8G -Djava.security.egd=file:/dev/./urandom"`
+
+Change the 8G to whatever suits your environment.  For example a small test instance might run with only 2GB heap size.  We will discuss later in monitoring and troubleshooting how you know whether the setting is suitable for the load you are catering for.
+
+The bit at the end (`-Djava.security.egd=file:/dev/./urandom`) can be important when running tomcat in virtual machines where it depends on a virtual source of randomness.  
+
+### DHIS2 (/opt/dhis2/dhis.conf)
+The important parameters, for example to make the database connection work, will already have been
+set in here.  The file contains a copy of all the possible configuration parameters (mostly commented out).  Refer to the implementation guide for a detailed explanation of each.
+
+Three parameters you might consider uncommenting/changing:
+
+1.  connection.pool.max_size - the default value of this is 80 which should be adequate for most systems.  For a small test system consider reducing this to, say 10.  In very rare instances, usually when there is some other problem in your database, you might need to increase this.  You need to ensure as you modify this that you stay within the limits of `max_connections` in postgresql configuration.
+2.  analytics.cache.expiration - if you uncomment this and keep the default setting of 3600, it will cache the results of SQL analytics queries for an hour.  These can sometimes be a big load on your database so it is highly advisable to enable this. On large aggregate systems it can have a dramatic effect.
+3.  system.session.timeout - this determines how long you can leave the application without being obliged to log back in again.  The default setting (1 hour) is probably too long for sensitive applications in clinical settings.  Something like 10 or 15 minutes might be more reasonable.
 
 
 
