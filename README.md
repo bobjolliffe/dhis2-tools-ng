@@ -198,10 +198,13 @@ Three parameters you might consider uncommenting/changing:
 3.  system.session.timeout - this determines how long you can leave the application without being obliged to log back in again.  The default setting (1 hour) is probably too long for sensitive applications in clinical settings.  Something like 10 or 15 minutes might be more reasonable.
 
 #### Monitoring agent
-It is important to setup a monitoring agent on your DHIS2 instance.  If you have ru the standard 
+It is important to setup a monitoring agent on your DHIS2 instance.  If you have run the standard 
 setup you will have installed a monitor called `munin`.  To enable detailed monitoring of your
 tomcat application, you should run:
 
 `sudo dhis2-tomcat-munin <instance_name> proxy`
+
+to setup the agent.  (change <instance_name) to your instance, eg. hmis, covid19 ...
+
 
 
