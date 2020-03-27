@@ -104,8 +104,13 @@ Note the "--" is necessary.  It tells lxc exec that everything following (includ
 
 ### Database
 The system should now be working, but you will probably want to tune your database a little to
-get the best performance from your available resources.  After doing this you will have to restart
-the database so it is a good idea to stop any running DHIS2 instances.  Eg. `sudo lxc stop covid19`.
+get the best performance from your available resources.  A good start would be to determine first what is the total amount of memory your machine has (see total memory after executing 'free -gh').  Let us proceed as though there is 32GB RAM in total.
+
+Deciding how much RAM to deidicate to postgresql depends a little on how many DHIS2 instances you are likely to run, but assuming you will have a production instance and perhaps a small test instance, giving 16GB exclusively to postgresql is a reasonable start.  You can enforce that limit so that the postgresql container only sees 16GB RAM by typing:
+
+`sudo lxc config set postgresql limits.memory 16GB'
+
+If you run `free -gh` inside the postgresql container you will see that it no longer can see the full amount of RAM, but has been confined to 16GB.  (try `sudo lxc exec postgres -- free -gh`).
 
 Then `sudo lxc exec postgres bash` to get to your postgres container.
 
@@ -140,8 +145,22 @@ random_page_cost = 1.1
 log_min_duration_statement = 300s
 max_locks_per_transaction = 1024
 ```
-The 4 settings that you should uncomment and give values to are `shared_buffers, work_mem, maintenance_work_mem` and `effective_cache_size`.
+The 4 settings that you should uncomment and give values to are `shared_buffers, work_mem, maintenance_work_mem` and `effective_cache_size`.  With 16GB of RAM, reasonable settings for these would be:
+```
+shared_buffers = 4GB
+work_mem=20MB
+maintenance_work_mem=1GB
+effective_cache_size=11GB
+```
+Before applying these settings you should shutdown any running DHIS2 instances.  So, for example, back on the host:
+```
+sudo lxc stop covid19
+sudo lxc restart postgresql
+sudo lxc start covid19
+```
+(TODO: install postgresql munin plugin)
 
+### DHIS2 instances
 
 
 
