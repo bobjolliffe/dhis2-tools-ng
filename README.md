@@ -100,7 +100,47 @@ sudo lxc exec postgres -- psql -c 'select name,id from dataelement limit 5'
 ```
 Note the "--" is necessary.  It tells lxc exec that everything following (including commandline switches like -c in this case) are to be interpreted as part of the remote command.
 
+## Post install tasks
 
+### Database
+The system should now be working, but you will probably want to tune your database a little to
+get the best performance from your available resources.  After doing this you will have to restart
+the database so it is a good idea to stop any running DHIS2 instances.  Eg. `sudo lxc stop covid19`.
+
+Then `sudo lxc exec postgres bash` to get to your postgres container.
+
+The file where all your custom settings are made is called `/etc/postgresql/10/main/conf.d/dhispg.conf`.  The default contents of this file is shown below:
+
+```
+# Postgresql settings for DHIS2
+
+# Adjust depending on number of DHIS2 instances and their pool size
+# By default each instance requires up to 80 connections
+# This might be different if you have set pool in dhis.conf
+max_connections = 200
+
+# Tune these according to your environment
+# About 25% available RAM for postgres
+# shared_buffers = 3GB
+
+# Multiply by max_connections to know potentially how much RAM is required
+# work_mem=20MB
+
+# As much as you can reasonably afford.  Helps with index generation
+# during the analytics generation task
+# maintenance_work_mem=512MB
+
+# Approx 80% of (Available RAM - maintenance_work_mem - max_connections*work_mem)
+# effective_cache_size=8GB
+
+checkpoint_completion_target = 0.8
+synchronous_commit = off
+wal_writer_delay = 10000ms
+random_page_cost = 1.1
+log_min_duration_statement = 300s
+max_locks_per_transaction = 1024
+```
+The 4 settings that you should uncomment and give values to are `shared_buffers, work_mem, maintenance_work_mem` and `effective_cache_size`.
 
 
 
