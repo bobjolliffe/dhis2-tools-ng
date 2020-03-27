@@ -143,10 +143,12 @@ max_connections = 200
 # Approx 80% of (Available RAM - maintenance_work_mem - max_connections*work_mem)
 # effective_cache_size=8GB
 
+# This setting is suitable for good SSD disk.  For slower spinning disk consider
+# changing to 4
+random_page_cost = 1.1
+
 checkpoint_completion_target = 0.8
 synchronous_commit = off
-wal_writer_delay = 10000ms
-random_page_cost = 1.1
 log_min_duration_statement = 300s
 max_locks_per_transaction = 1024
 ```
@@ -163,6 +165,9 @@ sudo lxc stop covid19
 sudo lxc restart postgresql
 sudo lxc start covid19
 ```
+Postgresql is an extremely configurable database with hundreds of configuration parameters.  This
+brief installation guide only touches on the most important tunables. 
+
 (TODO: install postgresql munin plugin)
 
 ### DHIS2 instances
@@ -176,6 +181,11 @@ The following are locations within the container that you will find common files
 1.  /etc/default/tomcat9 - this is where environment variables such as JAVA_OPTs are kept 
 2.  /etc/tomcat9/server.xml - you shouldn't need to do anything in here.  Unless you want to change the http pool size
 3.  /opt/dhis2 - this is where your DHIS2_HOME is.  Most important file in there is dhis.conf.
+
+Something which is quite different with tomcat9 on ubuntu is that it no longer uses catalina.out as its 
+console log.  Instead it is logging these messages using the standard syslog mechanism.  So you
+can find your tomcat messages in /var/log/syslog rather than catalina.out.  The dhis2-specific logs
+can be found at /opt/dhis2/logs/.
 
 #### Environment settings (/etc/default/tomcat9)
 The main thing to set in here is the JAVA_OPTS.  Following our example, we have 16GB of RAM left,
