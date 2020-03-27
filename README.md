@@ -7,6 +7,13 @@ configuration reference, and implement those configurations into a set of automa
 installation and management.  It is not the intention here to repeat all the detailed explanation
 that is provided there.
 
+Note also that DHIS2 is quite a complex system requiring some experience of linux, web based systems, database management etc to manage sustainably and securely.  There are a number of organisations who provide hosting services as a business.  If you do not have the skills or the resources in-house, you might be better outsourcing to one of these.
+
+This install guide describes a particular setup approach which is already used by a number of
+country systems in production.  The main reason you might want to follow this approach would 
+be if it is important for you to take advantage of (and contribute to) a community supported 
+process.
+
 ## Prerequisites you need before you start:
 
 1.  Your fully qualified domain name (FQDN), like `hmis.mygov.org`. Note this is just the name, not a URL like `https:\\hmis.mygov.org` This setup is designed for production use so it is assumed it will be using SSL/TLS which further assumes that you have a FQDN which will properly resolve to the public IP that you are exposing service on.  Do not proceed further until you have sorted this.
