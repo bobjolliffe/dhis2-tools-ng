@@ -70,7 +70,7 @@ To create another instance called staging:
 
 2.  Deploy a DHIS2 war file to your new instance:
 
-`dhis2-deploy-war -l https://releases.dhis2.org/2.33/2.33.2/dhis.war`
+`dhis2-deploy-war -l https://releases.dhis2.org/2.33/2.33.2/dhis.war hmis`
 
 3.  Browse to your new instance at `https://<your_hostname>/hmis`
 
@@ -171,13 +171,13 @@ When you install a dhis2 instance (with `dhis2-create-instance`), a lxc containe
 a standard system installation of tomcat 9.  Whereas this is sufficient to run a dhis2 application
 war file (see `dhis2-deploy-war` above), you will want to make some adjustments to the memory settings and perhaps other configuration tweaks.
 
-## File locations
+#### File locations
 The following are locations within the container that you will find common files for DHIS2 tweaking:
 1.  /etc/default/tomcat9 - this is where environment variables such as JAVA_OPTs are kept 
 2.  /etc/tomcat9/server.xml - you shouldn't need to do anything in here.  Unless you want to change the http pool size
 3.  /opt/dhis2 - this is where your DHIS2_HOME is.  Most important file in there is dhis.conf.
 
-### Environment settings (/etc/default/tomcat9)
+#### Environment settings (/etc/default/tomcat9)
 The main thing to set in here is the JAVA_OPTS.  Following our example, we have 16GB of RAM left,
 so we might want to give 8GB to our covid19 instance:
 
@@ -187,7 +187,7 @@ Change the 8G to whatever suits your environment.  For example a small test inst
 
 The bit at the end (`-Djava.security.egd=file:/dev/./urandom`) can be important when running tomcat in virtual machines where it depends on a virtual source of randomness.  
 
-### DHIS2 (/opt/dhis2/dhis.conf)
+#### DHIS2 (/opt/dhis2/dhis.conf)
 The important parameters, for example to make the database connection work, will already have been
 set in here.  The file contains a copy of all the possible configuration parameters (mostly commented out).  Refer to the implementation guide for a detailed explanation of each.
 
@@ -197,5 +197,11 @@ Three parameters you might consider uncommenting/changing:
 2.  analytics.cache.expiration - if you uncomment this and keep the default setting of 3600, it will cache the results of SQL analytics queries for an hour.  These can sometimes be a big load on your database so it is highly advisable to enable this. On large aggregate systems it can have a dramatic effect.
 3.  system.session.timeout - this determines how long you can leave the application without being obliged to log back in again.  The default setting (1 hour) is probably too long for sensitive applications in clinical settings.  Something like 10 or 15 minutes might be more reasonable.
 
+#### Monitoring agent
+It is important to setup a monitoring agent on your DHIS2 instance.  If you have ru the standard 
+setup you will have installed a monitor called `munin`.  To enable detailed monitoring of your
+tomcat application, you should run:
+
+`sudo dhis2-tomcat-munin <instance_name> proxy`
 
 
