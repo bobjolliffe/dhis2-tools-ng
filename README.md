@@ -108,7 +108,7 @@ root@staging:~# exit
 Executing bash like this lands you at an interactive prompt.  This can be useful, but is not always what you want.  For example you might want to execute a query directly on the database like:
 
 ```
-sudo lxc exec postgres -- psql -c 'select name,id from dataelement limit 5' 
+sudo lxc exec postgres -- psql -c 'select name,id from dataelement limit 5' hmis 
 ```
 Note the "--" is necessary.  It tells lxc exec that everything following (including commandline switches like -c in this case) are to be interpreted as part of the remote command.
 
