@@ -61,6 +61,13 @@ At this point your proxy, database and monitor servers should be up and running.
 | proxy    | RUNNING | 192.168.0.2 (eth0)  |      | PERSISTENT | 0         |
 +----------+---------+---------------------+------+------------+-----------+
 ```
+
+You should now be able to access your system by going to https://<your_domain_name>.  You shoud
+see the default apache2 landing page (more on how to change this below).
+
+If you encountered errors during the install, the easiest way to restart is just to run
+`./delete_all.sh`.  This will wipe all your containers and you can try again.
+
 Note the IP addresses of the containers.  When we install DHIS2 instances, each instance will also run in its own container and will require its own IP address.  By convention we suggest creating containers starting at 192.168.0.10 through to 192.168.0.19.  If you need (and have resources) for more than 10, then you might start giving them different IPs.
 
 You are now ready to start installing DHIS2 instances.
@@ -216,12 +223,50 @@ Three parameters you might consider uncommenting/changing:
 
 #### Monitoring agent
 It is important to setup a monitoring agent on your DHIS2 instance.  If you have run the standard 
-setup you will have installed a monitor called `munin`.  To enable detailed monitoring of your
-tomcat application, you should run:
+setup you will have installed a monitor called `munin` in a container called `monitor`.  
+
+To enable detailed monitoring of your DHIS2 tomcat application, you should run:
 
 `sudo dhis2-tomcat-munin <instance_name> proxy`
 
 to setup the agent.  (change <instance_name) to your instance, eg. hmis, covid19 ...
 
 ### Web proxy
+By default you will have instaled an apache2 reverse proxy server with an SSL/TLS certificate
+from letsencrypt.  You will be able to browse to your DHIS2 instances with `https://<server_name>/<instance_name>`.  You will also be able to browse to the syste monitor at `https://server_name>/munin`.  It should soon be also possible to use an nginx proxy, but the apache2 one is currently the 
+best tested.
 
+If you browse to home page at `https//:<server_name>` you will reach the apache2 default page. 
+Typically you will want to do one of two things:
+
+#### Create a custom landing page
+Sometimes people want to have a custom landing page with some basic information and perhaps links
+to the DHIS2 applications.  To do this you just need to replace the index.html file at
+`/var/lib/ww/html/index.html` inside the proxy container.
+
+To push a replacement page you could execute the following command:
+`sudo lxc file push myindex.html proxy/var/lib/www/html/index.html`
+
+#### Redirect to a DHIS2 application
+The other approach is to redirect requests directly to a DHIS2 application.
+
+To do this you need make a small change to the apache2 configuration.  You can do like:
+
+`sudo lxc exec proxy -- vi /etc/apache2/sites-enabled/apache-dhis2.conf`
+
+If you scroll down to somewhere around line 80, you will see:
+```
+        #===========================================================
+        # Rewrite requests for / to main dhis application
+        #===========================================================
+
+        # RewriteRule   ^/$  /dhis/  [R]
+```
+Uncomment the line with the RewriteRule and replace with the DHIS2 instance you want to have as
+the default.  For example:
+` RewriteRule   ^/$  /hmis/  [R]`
+
+You need to reload the apache2 configuration (restart would also work, but not necessary).  You 
+could do like:
+`sudo lxc exec proxy -- service apache2 reload`
+ 
