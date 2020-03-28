@@ -20,7 +20,7 @@ process.
 
 2.  Your timezone.  In order to see the list of available timezones type `timedatectl list-timezones`.  Make a note of your desired timezone.  Most likely you will want to also set the timezone on your host machine.  You can do this by typing `timedatectl set-timezone Africa/Dar_es_Salaam`.
 
-3.  Make sure that your host OS is minimally and securely setup, with ufw firewall enabled (don't forget to allow your ssh port).  NOTE that the installation described below will fail if you have not enabled ufw on the host.  You can follow a useful guide to do the initial steps to secure your base system [here](docs/secure_base.md). 
+3.  Make sure that your host OS is minimally and securely setup, with ufw firewall enabled (don't forget to allow your ssh port).  NOTE that the installation described below will fail if you have not enabled ufw on the host.  You can follow a useful guide to do the initial steps to secure your base system [here](docs/securing_base.md). 
 
 ## The install:
 
