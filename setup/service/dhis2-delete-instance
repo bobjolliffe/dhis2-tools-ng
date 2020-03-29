@@ -5,16 +5,12 @@
 NAME=$1
 PG=$2
 
-<<<<<<< HEAD
 if [[ $(lxc exec proxy -- ls /etc/ |grep "nginx") ]];
 then
 lxc exec proxy -- rm /etc/nginx/upstream/${NAME}
 else
 lxc exec proxy -- rm /etc/apache2/upstream/${NAME}
 fi
-=======
-lxc exec proxy -- rm /etc/apache2/upstream/${NAME}
->>>>>>> 54283b73bb72e871720a53747388618918f3e857
 lxc stop $NAME
 lxc delete $NAME
 
