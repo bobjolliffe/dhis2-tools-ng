@@ -112,8 +112,10 @@ hosts="$host";
 remote_addr="$remote_addr";
 proxy_add_x_forwarded_for="$proxy_add_x_forwarded_for";
 #if proxy is nginx ;
-cat <<EOF > /tmp/${NAME}
-    # Proxy pass to servlet container
+if [[ $(lxc exec proxy -- ls /etc/ |grep "nginx") ]];
+then
+  cat <<EOF > /tmp/${NAME}
+  # Proxy pass to servlet container
 
     location /${NAME} {
     proxy_pass                http://${IP}:8080/${NAME};
@@ -124,8 +126,11 @@ cat <<EOF > /tmp/${NAME}
     proxy_set_header X-Forwarded-Proto  http;
     }
 EOF
-
-
+lxc file push /tmp/${NAME} proxy/etc/nginx/upstream/${NAME}
+rm /tmp/${NAME}
+lxc exec proxy -- service nginx restart
+exit 1
+else
 # if proxy is apache2; then ....
 cat <<EOF > /tmp/${NAME}
 <Location /${NAME}>
@@ -138,4 +143,11 @@ EOF
 lxc file push /tmp/${NAME} proxy/etc/apache2/upstream/${NAME}
 rm /tmp/${NAME}
 lxc exec proxy -- service apache2 restart
+  exit 1
+fi
+   
+
+
+
+
 
