@@ -5,7 +5,10 @@
 INSTANCE=$1
 MONITOR=$2
 
-IP=$(lxc exec $INSTANCE -- ip addr show eth0 | grep -Po 'inet \K[\d.]+')
+# get name of default interface
+DEFAULT_INTERFACE=$(ip route |grep default | awk '{print $5}')
+
+IP=$(lxc exec $INSTANCE -- ip addr show $DEFAULT_INTERFACE | grep -Po 'inet \K[\d.]+')
 MANAGER_PASSWD=$(openssl rand -hex 20)
 MUNIN_CONF=/etc/munin/plugin-conf.d/munin-node
 

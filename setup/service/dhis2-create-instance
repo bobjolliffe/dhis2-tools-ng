@@ -46,6 +46,9 @@ PG=$3
 # convert IP to regex
 IPREGEX=$(echo $IP |sed "s/\./\\\./g")
 
+# get name of default interface
+DEFAULT_INTERFACE=$(ip route |grep default | awk '{print $5}')
+
 if [[ $(lxc list -c n --format csv $NAME) ]];
 then 
   echo Container $1 already exists;
@@ -70,8 +73,8 @@ echo "Creating tomcat container $NAME"
 lxc init ubuntu: $NAME
 
 # set ip addresses
-sudo lxc network attach lxdbr0 $NAME eth0 eth0
-sudo lxc config device set $NAME eth0 ipv4.address $IP
+sudo lxc network attach lxdbr0 $NAME $DEFAULT_INTERFACE $DEFAULT_INTERFACE
+sudo lxc config device set $NAME $DEFAULT_INTERFACE ipv4.address $IP
 
 # lxc config set $NAME boot.autostart false
 lxc config set $NAME user.type "Tomcat server"

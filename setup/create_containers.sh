@@ -30,7 +30,7 @@ for CONTAINER in $CONTAINERS; do
 
   echo "Creating $NAME of type $TYPE"
   lxc init ubuntu: $NAME
-  lxc network attach lxdbr0 $NAME eth0 $DEFAULT_INTERFACE 
+  lxc network attach lxdbr0 $NAME eth0 eth0
   lxc config device set $NAME eth0 ipv4.address $IP
 
   # create nat rules for proxy

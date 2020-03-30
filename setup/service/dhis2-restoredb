@@ -5,6 +5,6 @@ DB=$2
 
 sudo lxc exec postgres dropdb $DB
 sudo lxc exec postgres -- createdb -O $DB $DB
-zcat $BACKUPFILE |sudo lxc exec postgres -- psql $DB
+zcat $BACKUPFILE | grep -v 'ALTER .* OWNER' | sudo lxc exec postgres -- psql $DB
 echo "REASSIGN OWNED BY root TO $DB" | sudo lxc exec postgres -- psql $DB
 
