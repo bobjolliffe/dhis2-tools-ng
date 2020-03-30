@@ -11,5 +11,5 @@ lxc exec $NAME -- service nginx start
 echo "nginx setup running"
 echo "Updating firewall"
 lxc exec $NAME -- ufw allow 'Nginx Full'
-lxc exec $NAME -- certbot certonly --non-interactive --standalone --agree-tos -m $EMAIL -d $FQDN
+lxc exec $NAME -- certbot --nginx --non-interactive --standalone --agree-tos -m $EMAIL -d $FQDN
 lxc exec $NAME -- service nginx restart
