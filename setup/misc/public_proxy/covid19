@@ -1,0 +1,39 @@
+<Location /covid19>
+
+  # Whitelisted IPs - this is a good idea to only allow approved portals
+  # Order allow,deny
+  # Allow from 37.228.243.131 
+
+  # Blacklisting rules [These are ORed together]
+  # Limit request method
+  RewriteCond %{REQUEST_METHOD} !GET [NC,OR]
+  # Limit resources
+  RewriteCond %{REQUEST_URI} ^/covid19/api/([0-9]+/)?(user|trackedEntityInstance|metadata) [OR]  
+  # Forbid data model traversal of user or tei fields
+  RewriteCond %{QUERY_STRING} (trackedEntityInstance|user|lastUpdatedBy|createdBy)[^,]*[[(]|%5B|%28 
+  # Return not authorized
+  RewriteRule ^(.*)$ - [F,L]
+
+  # Whitelisting URL rules [These are ANDed together]
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?analytics.json
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?attributes
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?charts
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?dashboards
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?dashboardItems
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?dimensions
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?geoFeatures
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?legendSets
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?maps
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?resources
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?schemas
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?me
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?system/info
+  # Return not authorized
+  RewriteRule ^(.*)$ - [F,L]
+
+  RequestHeader set Authorization "Basic YWRtaW46ZGlzdHJpY3Q="
+
+  ProxyPass "http://192.168.0.10:8080/covid19"
+  ProxyPassReverse "http://192.168.0.10:8080/covid19"
+
+</Location>
