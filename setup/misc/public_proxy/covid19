@@ -28,6 +28,11 @@
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?schemas
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?me
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?system/info
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?dhis-web-maps
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?dhis-web-data-visualizer
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?dhis-web-event-visualizer
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?dhis-web-event-reports
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?dhis-web-pivot
   # Return not authorized
   RewriteRule ^(.*)$ - [F,L]
 
