@@ -1,5 +1,18 @@
 #!/usr/bin/env bash
 
+UFW_STATUS=$(sudo ufw status |grep Status|cut -d ' ' -f 2)
+if [[ $UFW_STATUS == "inactive" ]]; then
+	echo
+	echo "======= ERROR =========================================="
+	echo "ufw firewall needs to be enabled in order to perform the installation."
+	echo "It is required to NAT connections to the proxy container."
+	echo "You just need to have a rule to allow ssh access. eg:"
+	echo "   sudo ufw limit 22/tcp"
+	echo "then, 'sudo enable ufw'"
+	echo "Then you can try to run ./create_containers again"
+	exit 1
+fi
+
 # Parse json config file
 source parse_config.sh
 
