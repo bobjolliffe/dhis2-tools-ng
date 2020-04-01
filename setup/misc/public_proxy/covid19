@@ -1,8 +1,4 @@
-<Location /covid19>
-
-  # Whitelisted IPs - this is a good idea to only allow approved portals
-  # Order allow,deny
-  # Allow from 37.228.243.131 
+<Location /covid19/api>
 
   # Blacklisting rules [These are ORed together]
   # Limit request method
@@ -27,18 +23,25 @@
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?resources
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?schemas
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?me
-  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?system/info
-  RewriteCond %{REQUEST_URI} !^/covid19/dhis-web-maps
-  RewriteCond %{REQUEST_URI} !^/covid19/dhis-web-data-visualizer
-  RewriteCond %{REQUEST_URI} !^/covid19/dhis-web-event-visualizer
-  RewriteCond %{REQUEST_URI} !^/covid19/dhis-web-event-reports
-  RewriteCond %{REQUEST_URI} !^/covid19/dhis-web-pivot
   # Return not authorized
   RewriteRule ^(.*)$ - [F,L]
 
   RequestHeader set Authorization "Basic YWRtaW46ZGlzdHJpY3Q="
 
-  ProxyPass "http://192.168.0.10:8080/covid19"
-  ProxyPassReverse "http://192.168.0.10:8080/covid19"
+  ProxyPass "http://192.168.0.10:8080/covid19/api"
+  ProxyPassReverse "http://192.168.0.10:8080/covid19/api"
 
 </Location>
+
+# Allow all access to static resources
+<Location /covid19 >
+
+  # Whitelisted IPs - this is a good idea to only allow approved portals
+  #<RequireAny>
+  #   Require ip 37.228.243.131
+  #   Require ip 24.65.234.23
+  #</RequireAny>
+  Require all granted
+
+</Location>
+
