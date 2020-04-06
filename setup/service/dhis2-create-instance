@@ -78,7 +78,7 @@ lxc config set $NAME user.type "Tomcat server"
 lxc start $NAME 
 
 # wait for network to come up
-ping -c 3 $IP
+ping -c 7 $IP
 
 cat $TOMCAT_SETUP | lxc exec $NAME -- bash
 
