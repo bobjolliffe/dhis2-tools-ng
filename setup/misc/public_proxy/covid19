@@ -18,7 +18,7 @@ ExtFilterDefine versiononly mode=output \
   # Limit resources
   RewriteCond %{REQUEST_URI} ^/covid19/api/([0-9]+/)?(user[^S]|trackedEntityInstance|metadata) [OR]  
   # Forbid data model traversal of user or tei fields
-  RewriteCond %{QUERY_STRING} (trackedEntityInstance|lastUpdatedBy|createdBy)[^,]*([[(]|%5B|%28)
+  RewriteCond %{QUERY_STRING} (user|trackedEntityInstance|lastUpdatedBy|createdBy)[^,]*([[(]|%5B|%28)
   # RewriteCond %{QUERY_STRING} (user)[^,]*([[(]|%5B|%28) 
   # Return not authorized
   RewriteRule ^(.*)$ - [F,L]
