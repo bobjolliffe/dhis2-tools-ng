@@ -13,8 +13,10 @@ TOMCAT_SETUP=/usr/local/etc/dhis/tomcat_setup
 
 ###############################################################
 usage() {
-  echo "Usage: $PROG [options] <instance> <ip> <postgres_container>"
+  echo "Usage: $PROG [options] <instance> <ip> [<postgres_container>]"
   echo "  instance: name of the dhis2 instance to create"
+  echo "  ip: the ip address of the container."
+  echo "  postgres_container: the name of postgresql container (default postgres)"
   echo "Options:"
   echo "  -h, --help       Display this help message"
   echo "  -n               Do NOT create database for instance"
@@ -34,14 +36,14 @@ done
 
 shift $(($OPTIND - 1))
 
-if [ "$#" -lt 3 ]; then
+if [ "$#" -lt 2 ]; then
   usage
   exit 1
 fi
 
 NAME=$1
 IP=$2
-PG=$3
+PG=${3:-postgres}
 
 # convert IP to regex
 IPREGEX=$(echo $IP |sed "s/\./\\\./g")

@@ -34,7 +34,7 @@ if [ "$#" -lt 2 ]; then
 fi
 
 NAME=$1
-DBCONTAINER=${1:-postgres}
+DBCONTAINER=${2:-postgres}
 
 lxc exec proxy -- rm /etc/apache2/upstream/${NAME}
 lxc stop $NAME
