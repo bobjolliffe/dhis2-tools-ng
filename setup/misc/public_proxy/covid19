@@ -1,5 +1,12 @@
-# This jq filter will strip off user attributes
-ExtFilterDefine trashjson mode=output \
+# DHIS2 WAF rules to allow public access to dashboard items
+#
+
+# SECTION 1
+# define jq filters which can be applied to response
+#
+# This jq filter will strip off top level user attributes
+# Need to verify whether it is necessary
+ExtFilterDefine stripjson mode=output \
     cmd="/usr/bin/jq 'del(.user,.users,.likedBy,.lastUpdatedBy,.interpretations)'"
 
 # Reduce output to just id field
@@ -10,8 +17,12 @@ ExtFilterDefine idonly mode=output \
 ExtFilterDefine versiononly mode=output \
     cmd="/usr/bin/jq '{ version: .version }'"
 
+# SECTION 2 
+# API requests
+#
 <Location /covid19/api>
 
+  # SECTION 2.1
   # Blacklisting rules [These are ORed together]
   # Limit request method
   RewriteCond %{REQUEST_METHOD} !(GET|OPTIONS) [NC,OR]
@@ -23,6 +34,7 @@ ExtFilterDefine versiononly mode=output \
   # Return not authorized
   RewriteRule ^(.*)$ - [F,L]
 
+  # SECTION 2.2
   # Whitelisting URL rules [These are ANDed together]
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?analytics
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?apps
@@ -49,16 +61,16 @@ ExtFilterDefine versiononly mode=output \
   # Return not authorized
   RewriteRule ^(.*)$ - [F,L]
 
-  # Substitute 's/("\w*":\s+?)"[^"]*"/\1 "XXXX"/g'
-
+  # Authorize and send to proxy
   RequestHeader set Authorization "Basic YWRtaW46ZGlzdHJpY3Q="
-  SetOutputFilter trashjson
+  SetOutputFilter stripjson
 
   ProxyPass "http://192.168.0.10:8080/covid19/api"
   ProxyPassReverse "http://192.168.0.10:8080/covid19/api"
 
 </Location>
 
+# SECTION 3 
 # Special rule for /api/me
 # Filter output to only show id
 <LocationMatch ^/covid19/api/([0-9]+/)?me >
@@ -67,6 +79,7 @@ ExtFilterDefine versiononly mode=output \
   ProxyPassReverse "http://192.168.0.10:8080"
 </LocationMatch>
 
+# SECTION 4 
 # Special rule for /system/info
 # Filter output to only show id
 <LocationMatch ^/covid19/api/([0-9]+/)?system/info >
@@ -75,6 +88,7 @@ ExtFilterDefine versiononly mode=output \
   ProxyPassReverse "http://192.168.0.10:8080"
 </LocationMatch>
 
+# SECTION 5 
 # Allow all access to static resources
 <LocationMatch /covid19/dhis-web- >
   Require all granted
