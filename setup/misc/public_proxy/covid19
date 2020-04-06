@@ -1,47 +1,82 @@
+# This jq filter will strip off user attributes
+ExtFilterDefine trashjson mode=output \
+    cmd="/usr/bin/jq 'del(.user,.users,.likedBy,.lastUpdatedBy,.interpretations)'"
+
+# Reduce output to just id field
+ExtFilterDefine idonly mode=output \
+    cmd="/usr/bin/jq '{ id: .id }'"
+
+# Reduce output to just version field
+ExtFilterDefine versiononly mode=output \
+    cmd="/usr/bin/jq '{ version: .version }'"
+
 <Location /covid19/api>
 
   # Blacklisting rules [These are ORed together]
   # Limit request method
-  RewriteCond %{REQUEST_METHOD} !GET [NC,OR]
+  RewriteCond %{REQUEST_METHOD} !(GET|OPTIONS) [NC,OR]
   # Limit resources
-  RewriteCond %{REQUEST_URI} ^/covid19/api/([0-9]+/)?(user|trackedEntityInstance|metadata) [OR]  
+  RewriteCond %{REQUEST_URI} ^/covid19/api/([0-9]+/)?(user[^S]|trackedEntityInstance|metadata) [OR]  
   # Forbid data model traversal of user or tei fields
-  RewriteCond %{QUERY_STRING} (trackedEntityInstance|user|lastUpdatedBy|createdBy)[^,]*[[(]|%5B|%28 
+  RewriteCond %{QUERY_STRING} (trackedEntityInstance|lastUpdatedBy|createdBy)[^,]*([[(]|%5B|%28)
+  # RewriteCond %{QUERY_STRING} (user)[^,]*([[(]|%5B|%28) 
   # Return not authorized
   RewriteRule ^(.*)$ - [F,L]
 
   # Whitelisting URL rules [These are ANDed together]
-  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?analytics.json
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?analytics
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?apps
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?attributes
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?charts
-  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?dashboards
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?dashboardItems
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?dashboards
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?reportTables
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?dimensions
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?geoFeatures
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?legendSets
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?legends
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?maps
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?resources
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?schemas
   RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?me
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?system/info
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?userSettings
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?externalMapLayers
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?organisationUnitLevels
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?programStages
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?optionSets
+  RewriteCond %{REQUEST_URI} !^/covid19/api/([0-9]+/)?options  
   # Return not authorized
   RewriteRule ^(.*)$ - [F,L]
 
+  # Substitute 's/("\w*":\s+?)"[^"]*"/\1 "XXXX"/g'
+
   RequestHeader set Authorization "Basic YWRtaW46ZGlzdHJpY3Q="
+  SetOutputFilter trashjson
 
   ProxyPass "http://192.168.0.10:8080/covid19/api"
   ProxyPassReverse "http://192.168.0.10:8080/covid19/api"
 
 </Location>
 
+# Special rule for /api/me
+# Filter output to only show id
+<LocationMatch ^/covid19/api/([0-9]+/)?me >
+  SetOutputFilter idonly
+  ProxyPass "http://192.168.0.10:8080"
+  ProxyPassReverse "http://192.168.0.10:8080"
+</LocationMatch>
+
+# Special rule for /system/info
+# Filter output to only show id
+<LocationMatch ^/covid19/api/([0-9]+/)?system/info >
+  SetOutputFilter versiononly
+  ProxyPass "http://192.168.0.10:8080"
+  ProxyPassReverse "http://192.168.0.10:8080"
+</LocationMatch>
+
 # Allow all access to static resources
-<Location /covid19 >
-
-  # Whitelisted IPs - this is a good idea to only allow approved portals
-  #<RequireAny>
-  #   Require ip 37.228.243.131
-  #   Require ip 24.65.234.23
-  #</RequireAny>
+<LocationMatch /covid19/dhis-web- >
   Require all granted
-
-</Location>
+</LocationMatch>
 

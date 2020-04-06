@@ -5,14 +5,13 @@
 #    / /_/ / __  // / ___/ / __/
 #   /_____/_/ /_/___//____/____/
 #
-#   Script to completely remove a dhis2 instance
+#   Show non-idle database connections
 
 PROG=`basename $0`
 
 ###############################################################
 usage() {
-  echo "Usage: $PROG <name> [<postgres_container>]"
-  echo "  name: name of the dhis2 container"
+  echo "Usage: $PROG [<postgres_container>]"
   echo "  postgres_container: name of the postgres container"
   echo "Options:"
   echo "  -h, --help       Display this help message"
@@ -28,19 +27,8 @@ do
 done
 shift $(($OPTIND - 1))
 
-if [ "$#" -lt 2 ]; then
-  usage
-  exit 1
-fi
-
-NAME=$1
 DBCONTAINER=${1:-postgres}
 
-lxc exec proxy -- rm /etc/apache2/upstream/${NAME}
-lxc stop $NAME
-lxc delete $NAME
+Q="SELECT now()-xact_start,now()-query_start,datname,state,query from pg_stat_activity WHERE state != 'idle' AND datname != 'postgres' ORDER BY now()-xact_start DESC;"
 
-lxc exec ${DBCONTAINER} -- dropdb $NAME
-lxc exec ${DBCONTAINER} -- dropuser $NAME
-
-sudo sed -i "/.* $N$/d" /etc/hosts
+echo $Q | lxc exec $DBCONTAINER -- psql -t postgres
