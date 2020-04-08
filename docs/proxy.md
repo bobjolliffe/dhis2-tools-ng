@@ -19,6 +19,7 @@ apache2 and nginx which can be adopted or modified as required.
 ## Configuring web reverse proxy nginx
 To decide which reverse proxy whether apache2 or nginx to use in this setup here is the steps
 1. Enable **nginx** as reverse proxy to be used by just editing the configuration json as below
+
 >
    {
   "fqdn":"xxx.xxx.xxx",
@@ -46,8 +47,7 @@ To decide which reverse proxy whether apache2 or nginx to use in this setup here
       "type": "munin_monitor"
     }
   ]
-}
--------------------------------------------------------------------------------------------------
+  }
 
 In that json, there is two blocks that need to be changed to specify which proxy is of of your preference
 1. First change this block and specify the proxy to be used in the *"proxy":* property
