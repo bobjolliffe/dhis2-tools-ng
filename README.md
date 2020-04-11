@@ -84,7 +84,7 @@ To create another instance called staging:
 
 2.  Deploy a DHIS2 war file to your new instance:
 
-`dhis2-deploy-war -l https://releases.dhis2.org/2.33/2.33.2/dhis.war hmis`
+`sudo dhis2-deploy-war -l https://releases.dhis2.org/2.33/2.33.2/dhis.war hmis`
 
 3.  Browse to your new instance at `https://<your_hostname>/hmis`
 
@@ -115,7 +115,7 @@ root@staging:~# exit
 Executing bash like this lands you at an interactive prompt.  This can be useful, but is not always what you want.  For example you might want to execute a query directly on the database like:
 
 ```
-sudo lxc exec postgres -- psql -c 'select name,id from dataelement limit 5' hmis 
+sudo lxc exec postgres -- psql -c 'select name,uid from dataelement limit 5' hmis 
 ```
 Note the "--" is necessary.  It tells lxc exec that everything following (including commandline switches like -c in this case) are to be interpreted as part of the remote command.
 
@@ -127,7 +127,7 @@ get the best performance from your available resources.  A good start would be t
 
 Deciding how much RAM to deidicate to postgresql depends a little on how many DHIS2 instances you are likely to run, but assuming you will have a production instance and perhaps a small test instance, giving 16GB exclusively to postgresql is a reasonable start.  You can enforce that limit so that the postgresql container only sees 16GB RAM by typing:
 
-`sudo lxc config set postgresql limits.memory 16GB'
+`sudo lxc config set postgresql limits.memory 16GB`
 
 If you run `free -gh` inside the postgresql container you will see that it no longer can see the full amount of RAM, but has been confined to 16GB.  (try `sudo lxc exec postgres -- free -gh`).
 
