@@ -97,7 +97,7 @@ if [[ $MONITORING == munin ]]; then
   done
   # Also monitor the host
   apt-get install munin-node -y
-  echo "cidr_allow 192.168.0.30/32\n" >> /etc/munin/munin-node.conf
+  echo "cidr_allow 192.168.0.30/32" >> /etc/munin/munin-node.conf
   ufw allow proto tcp from 192.168.0.30 to any port 4949
   service munin-node restart
 
