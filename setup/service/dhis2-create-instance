@@ -150,7 +150,7 @@ fi
 
 # dealing with systemd security
 # comment out catalina.out routing
-lxc exec $NAME -- sed -i 's/^/# /' /etc/rsyslog.d/22-tomcat9.conf
+lxc exec $NAME -- sed -i 's/^/# /' /etc/rsyslog.d/*tomcat9.conf
 # allow service access to /opt/dhis2
 lxc exec $NAME -- sed -i '/^# Security/a ReadWritePaths="/opt/dhis2"' /etc/systemd/system/multi-user.target.wants/tomcat9.service
 lxc exec $NAME -- systemctl daemon-reload
