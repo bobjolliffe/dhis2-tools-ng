@@ -1,7 +1,6 @@
 apt-get -y update 
 apt-get -y upgrade
 apt-get -y install postgresql postgis
-sed -i "s/^#listen_addresses.*$/listen_addresses = '*'/" /etc/postgresql/10/main/postgresql.conf
 
 sudo -u postgres createuser -s root
 

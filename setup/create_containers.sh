@@ -22,7 +22,8 @@ if [[ ! -z $ENCDEV ]] ; then
   source ./disk_setup
 fi
 
-echo $CONTAINERS
+# ubuntu version for containers
+GUESTOS="20.04"
 
 # some introspection
 DEFAULT_INTERFACE=$(ip route |grep default | awk '{print $5}')
@@ -42,7 +43,7 @@ for CONTAINER in $CONTAINERS; do
   TYPE=$(echo $CONTAINER | jq -r .type)
 
   echo "Creating $NAME of type $TYPE"
-  lxc init ubuntu: $NAME
+  lxc init ubuntu:$GUESTOS $NAME
   lxc network attach lxdbr0 $NAME eth0 eth0
   lxc config device set $NAME eth0 ipv4.address $IP
 

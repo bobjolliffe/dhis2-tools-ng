@@ -11,11 +11,13 @@ PROG=`basename $0`
 CREATEDB=true
 TOMCAT_SETUP=/usr/local/etc/dhis/tomcat_setup
 
+GUESTOS=20.04
+
 ###############################################################
 usage() {
-  echo "Usage: $PROG [options] <instance> <ip> [<postgres_container>]"
+  echo "Usage: $PROG [options] <instance> [<ip>] [<postgres_container>]"
   echo "  instance: name of the dhis2 instance to create"
-  echo "  ip: the ip address of the container."
+  echo "  ip: the ip address of the container (default picks next free IP ending in .10 to .19"
   echo "  postgres_container: the name of postgresql container (default postgres)"
   echo "Options:"
   echo "  -h, --help       Display this help message"
@@ -30,46 +32,99 @@ do
     n) CREATEDB=false ;;
     h) usage;;
     *) echo "Error: Unknown parameter '$OPTARG'."
-        exit 1;;
+      exit 1;;
   esac
 done
 
 shift $(($OPTIND - 1))
 
-if [ "$#" -lt 2 ]; then
+if [ "$#" -lt 1 ]; then
   usage
   exit 1
 fi
 
 NAME=$1
-IP=$2
+
+USED=$(lxc list -cn4 --format csv |awk -F '.' '/1[0-9]? / {print strtonum($4)}')
+for FREE in {10..20}; do  echo $USED | grep -q -w $FREE || break; done
+# if FREE==20 then nothing found
+NETPREFIX=$(ip addr | awk '/inet.*lxdbr0/ {print $2}'|grep -o -e '^[0-9]*.[0-9]*.[0-9]*')
+FREEIP="${NETPREFIX}.${FREE}"
+
+IP=${2:-${FREEIP}}
 PG=${3:-postgres}
 
 # convert IP to regex
 IPREGEX=$(echo $IP |sed "s/\./\\\./g")
 
+# check Container name is available
 if [[ $(lxc list -c n --format csv $NAME) ]];
 then 
   echo Container $1 already exists;
-  exit 1	
+  exit 1  
 fi
 
+# Check IP is available
 if [[ $(lxc list -c 4 |grep $IPREGEX) ]];
 then
   echo "$IP already in use"
   exit 1
 fi
 
-if [ ! $(lxc list -c n --format csv $PG) ];
+if [ $CREATEDB ] 
 then
-  echo No such container $PG;
-  exit 1
-fi
 
+  # Check if Postgres container exists
+  if [ ! $(lxc list -c n --format csv $PG) ];
+  then
+    echo No such container $PG;
+    exit 1
+  fi
+
+  # Check postgres version
+  PGVERSION=$(lxc exec $PG -- psql -t -c 'select version()' postgres |awk '/PostgreSQL/ {print $2}')
+  if [ -z $PGVERSION ] 
+  then
+    echo "Cant connect to a postgres server on $PG"
+    exit 1
+  fi
+  PGMAJOR=$(echo $PGVERSION |cut -d. -f 1)
+
+  # Check if database already exists
+  if [ $(lxc exec $PG -- psql -lqt --csv |cut -d ','  -f 1 |grep -w $NAME) ]
+  then
+    echo "Database $NAME already exists"
+    exit 1
+  fi
+
+  # Check if database user already exists
+  if [ $(lxc exec $PG -- psql  --csv -qt -c '\du' postgres| cut -d,  -f1 |grep -w $NAME) ]
+  then
+    echo "User $NAME already exists"
+    exit 1
+  fi
+
+  echo "Creating database $NAME on $PG"
+  PASSWD=$(openssl rand -hex 20)
+  lxc exec $PG -- createuser $NAME
+  lxc exec $PG -- psql -c "ALTER user $NAME with PASSWORD '$PASSWD'" postgres 
+  lxc exec $PG -- createdb -O $NAME $NAME
+  lxc exec $PG -- psql -c "CREATE EXTENSION postgis" $NAME
+
+
+  # Fixing pg_hba.conf permissions
+  # get rid of any existing lines for the IP
+  lxc exec $PG -- sed -i "/$IPREGEX/d" /etc/postgresql/$PGMAJOR/main/pg_hba.conf
+  lxc exec $PG -- sed -i "$ a\
+    host $NAME $NAME $IP/32 md5" /etc/postgresql/$PGMAJOR/main/pg_hba.conf
+      lxc exec $PG -- service postgresql reload
+      # add firewall rule
+      lxc exec $PG ufw allow proto tcp from $IP to any port 5432
+fi
 
 echo "Creating tomcat container $NAME"
 
-lxc init ubuntu: $NAME
+lxc init ubuntu:$GUESTOS $NAME
 
 # set ip addresses
 sudo lxc network attach lxdbr0 $NAME eth0 eth0
@@ -80,36 +135,26 @@ lxc config set $NAME user.type "Tomcat server"
 lxc start $NAME 
 
 # wait for network to come up
-ping -c 3 $IP
+while true ; do
+  lxc exec $NAME -- nslookup archive.ubuntu.com >/dev/null && break || echo waiting for network; sleep 1 ;
+done
 
 cat $TOMCAT_SETUP | lxc exec $NAME -- bash
+
+if [ $CREATEDB ]
+then	
+  lxc exec $NAME -- sed -i "s/^connection.username.*$/connection.username = $NAME/" /opt/dhis2/dhis.conf
+  lxc exec $NAME -- sed -i "s/^connection.password.*$/connection.password = $PASSWD/" /opt/dhis2/dhis.conf
+  lxc exec $NAME -- sed -i "s/^connection.url.*$/connection.url = jdbc:postgresql:\/\/$PG\/$NAME/" /opt/dhis2/dhis.conf
+fi
 
 # Append to bottom /etc/hosts
 sudo sed -i "/$IP/d" /etc/hosts
 sudo sed -i "$ a\
-	$IP $NAME" /etc/hosts
+  $IP $NAME" /etc/hosts
 
-if $CREATEDB; then
-	PASSWD=$(openssl rand -hex 20)
 
-	lxc exec $PG -- createuser $NAME
-	lxc exec $PG -- psql -c "ALTER user $NAME with PASSWORD '$PASSWD'" postgres 
-	lxc exec $PG -- createdb -O $NAME $NAME
-        lxc exec $PG -- psql -c "CREATE EXTENSION postgis" $NAME
 
-	lxc exec $NAME -- sed -i "s/^connection.username.*$/connection.username = $NAME/" /opt/dhis2/dhis.conf
-	lxc exec $NAME -- sed -i "s/^connection.password.*$/connection.password = $PASSWD/" /opt/dhis2/dhis.conf
-	lxc exec $NAME -- sed -i "s/^connection.url.*$/connection.url = jdbc:postgresql:\/\/$PG\/$NAME/" /opt/dhis2/dhis.conf
-
-	# Fixing pg_hba.conf permissions
-        # get rid of any existing lines for the IP
-        lxc exec $PG -- sed -i "/$IPREGEX/d" /etc/postgresql/10/main/pg_hba.conf
-        lxc exec $PG -- sed -i "$ a\
-	  host $NAME $NAME $IP/32 md5" /etc/postgresql/10/main/pg_hba.conf
-	lxc exec $PG -- service postgresql reload
-	# add firewall rule
-	lxc exec $PG ufw allow proto tcp from $IP to any port 5432
-fi
 hosts="$host";
 remote_addr="$remote_addr";
 proxy_add_x_forwarded_for="$proxy_add_x_forwarded_for";
