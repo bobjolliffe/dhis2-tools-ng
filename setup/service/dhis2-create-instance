@@ -148,12 +148,19 @@ then
   lxc exec $NAME -- sed -i "s/^connection.url.*$/connection.url = jdbc:postgresql:\/\/$PG\/$NAME/" /opt/dhis2/dhis.conf
 fi
 
+# dealing with systemd security
+# comment out catalina.out routing
+lxc exec $NAME -- sed -i 's/^/# /' /etc/rsyslog.d/22-tomcat9.conf
+# allow service access to /opt/dhis2
+lxc exec $NAME -- sed -i '/^# Security/a ReadWritePaths="/opt/dhis2"' /etc/systemd/system/multi-user.target.wants/tomcat9.service
+lxc exec $NAME -- systemctl daemon-reload
+lxc exec $NAME -- service rsyslog restart
+lxc exec $NAME -- service tomcat9 restart
+
 # Append to bottom /etc/hosts
 sudo sed -i "/$IP/d" /etc/hosts
 sudo sed -i "$ a\
   $IP $NAME" /etc/hosts
-
-
 
 hosts="$host";
 remote_addr="$remote_addr";
