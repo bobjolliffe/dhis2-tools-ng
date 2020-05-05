@@ -1,7 +1,12 @@
 apt-get -y update
 apt-get -y upgrade
 apt-get -y install nginx
+apt-get install -y software-properties-common
+add-apt-repository -y ppa:certbot/certbot
+apt-get -y update
+
+apt-get -y install python-certbot-nginx
 
 ufw allow 80/tcp
 ufw allow 443/tcp
-ufw enable
+yes | ufw enable

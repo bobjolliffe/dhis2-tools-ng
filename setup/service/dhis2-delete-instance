@@ -36,7 +36,12 @@ fi
 NAME=$1
 DBCONTAINER=${2:-postgres}
 
+if [[ $(lxc exec proxy -- ls /etc/ |grep "nginx") ]];
+then
+lxc exec proxy -- rm /etc/nginx/upstream/${NAME}
+else
 lxc exec proxy -- rm /etc/apache2/upstream/${NAME}
+fi
 lxc stop $NAME
 lxc delete $NAME
 
