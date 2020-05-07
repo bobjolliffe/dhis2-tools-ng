@@ -63,7 +63,10 @@ for CONTAINER in $CONTAINERS; do
   fi
   lxc start $NAME
   # wait for network to come up
-  ping -c 4 $IP
+  while true ; do
+    lxc exec $NAME -- nslookup archive.ubuntu.com >/dev/null && break || echo waiting for network; sleep 1 ;
+  done
+
   # run setup scripts
   
   echo "Running setup from containers/$TYPE"
