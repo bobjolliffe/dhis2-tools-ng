@@ -13,12 +13,21 @@ chown -R tomcat.tomcat /opt/dhis2
 echo "tomcat" >> /etc/cron.deny
 echo "tomcat" >> /at.deny
 
-ufw allow proto tcp from 192.168.0.2 to any port 8080  
-ufw allow proto tcp from 192.168.0.1 to any port 8080  
-ufw enable
+mkdir /etc/systemd/system/tomcat.service.d
 
 ########################################################################
 # Config files
+# 1.  override for tomcat9 under systemd
+#
+cat << EOF > /etc/systemd/system/tomcat.service.d/override.conf
+[Service]
+ReadWritePaths=/opt/dhis2
+ReadWritePaths=/opt/glowroot
+ReadWritePaths=/var/log/tomcat9
+EOF
+
+# 2.  dhis.conf file
+#
 cat << EOF > /opt/dhis2/dhis.conf
 # ----------------------------------------------------------------------
 # Database connection for PostgreSQL
@@ -137,6 +146,8 @@ chown root.tomcat /opt/dhis2/dhis.conf
 chmod 640 /opt/dhis2/dhis.conf
 
 ######################################################################################
+# 3.  server.xml
+#
 cat << EOF > /etc/tomcat9/server.xml
 <?xml version="1.0" encoding="utf-8"?>
 
@@ -188,3 +199,10 @@ cat << EOF > /etc/tomcat9/server.xml
   </Service>
 </Server>
 EOF
+
+
+service tomcat9 restart
+ufw allow proto tcp from 192.168.0.2 to any port 8080  
+ufw allow proto tcp from 192.168.0.1 to any port 8080  
+ufw enable
+
