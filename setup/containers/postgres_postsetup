@@ -1,2 +1,7 @@
-lxc file push configs/dhispg.conf $NAME/etc/postgresql/10/main/conf.d/dhispg.conf
+# Check postgres version
+PGVERSION=$(lxc exec $NAME -- psql -t -c 'select version()' postgres |awk '/PostgreSQL/ {print $2}')
+PGMAJOR=$(echo $PGVERSION |cut -d. -f 1)
+
+lxc exec $NAME sed -i "s/^#listen_addresses.*$/listen_addresses = '*'/" /etc/postgresql/$PGMAJOR/main/postgresql.conf
+lxc file push configs/dhispg.conf $NAME/etc/postgresql/$PGMAJOR/main/conf.d/dhispg.conf
 lxc restart $NAME

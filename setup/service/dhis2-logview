@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+#       ____  __  ______________
+#      / __ \/ / / /  _/ ___/__ \
+#     / / / / /_/ // / \__ \__/ /
+#    / /_/ / __  // / ___/ / __/
+#   /_____/_/ /_/___//____/____/
+#
+#   Script to view dhis2 tomcat log
+
+PROG=`basename $0`
+
+###############################################################
+usage() {
+  echo "Usage: $PROG [options] <instance> "
+  echo "  instance: name of the dhis2 instance to view"
+  echo "  Options:"
+  echo "    -h, --help       Display this help message"
+  echo "    -r, --reverse    Show log in reverse order"
+  echo "    -f, --follow     Follow live log (like tail -f)"
+  echo "    -g <pattern>, --grep=<pattern> Grep the log"
+  echo "    -S <time>, --since=<time>  Show log since time"
+  echo "    -U <time>, --until=<time>  Show log until time"
+  echo
+}
+
+# read the options
+TEMP=`getopt -o S:U:f::r::g:h:: --long since:,until:,follow::,reverse::,grep:,help:: -- "$@"`
+if [ $? -ne 0 ]; then
+  usage; exit 1
+fi
+
+eval set -- "$TEMP"
+
+# extract options and their arguments into variables.
+while true ; do
+    case "$1" in
+        -f|--follow)
+            FOLLOW='-f' ; shift 2 ;;
+        -r|--reverse)
+            REVERSE='-r' ; shift 2 ;;
+        -S|--since)
+            SINCE="-S '$2'"; shift 2 ;;
+        -U|--until)
+            UNTIL="-U '$2'" ; shift 2;;
+	-g|--grep)
+	    GREP="-g '$2' "; shift 2;;
+	-h|--help)
+	    usage; exit 1;;
+        --) shift ; break ;;
+        *) usage; exit 1 ;;
+    esac
+done
+
+NAME=$1
+
+JCMD="journalctl -u tomcat9 $SINCE $UNTIL $FOLLOW $REVERSE $GREP"
+echo $JCMD
+echo $JCMD | lxc exec $NAME -- sh
