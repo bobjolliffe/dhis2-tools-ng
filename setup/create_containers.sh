@@ -100,10 +100,10 @@ if [[ $MONITORING == munin ]]; then
     fi
   done
   # Also monitor the host
-  apt-get install munin-node -y
-  echo "cidr_allow 192.168.0.30/32" >> /etc/munin/munin-node.conf
-  ufw allow proto tcp from 192.168.0.30 to any port 4949
-  service munin-node restart
+  sudo apt-get install munin-node -y
+  sudo echo "cidr_allow 192.168.0.30/32" >> /etc/munin/munin-node.conf
+  sudo ufw allow proto tcp from 192.168.0.30 to any port 4949
+  sudo service munin-node restart
 
   lxc exec monitor -- /etc/init.d/munin restart
 fi
