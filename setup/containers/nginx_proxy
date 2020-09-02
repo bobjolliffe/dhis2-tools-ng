@@ -1,6 +1,10 @@
+add-apt-repository ppa:certbot/certbot
 apt-get -y update
 apt-get -y upgrade
-apt-get -y install nginx
+apt-get -y install nginx libwww-perl
+apt-get -y install certbot
+
+mkdir -p /etc/nginx/upstream
 
 ufw allow 80/tcp
 ufw allow 443/tcp
