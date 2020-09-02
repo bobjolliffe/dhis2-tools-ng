@@ -1,9 +1,39 @@
 #!/usr/bin/env bash
 #
-# Configures munin plugin on tomcat container
+# Configures tomcat munin monitoring
+
+PROG=`basename $0`
+
+###############################################################
+usage() {
+  echo "Usage: $PROG <instance> <monitor container>"
+  echo "  instance: name of the dhis2 instance to monitor"
+  echo "  monitor_container: the name of monitor container (default monitor)"
+  echo "Options:"
+  echo "  -h, --help       Display this help message"
+}
+
+# main entry point
+echo checking options
+while getopts p:nh opt
+do
+  case $opt in
+    h) usage;;
+    *) echo "Error: Unknown parameter '$OPTARG'."
+      exit 1;;
+  esac
+done
+
+shift $(($OPTIND - 1))
+
+if [ "$#" -lt 1 ]; then
+  usage
+  exit 1
+fi
+
 
 INSTANCE=$1
-MONITOR=$2
+MONITOR=${2:-monitor}
 
 IP=$(lxc exec $INSTANCE -- ip addr show eth0 | grep -Po 'inet \K[\d.]+')
 MANAGER_PASSWD=$(openssl rand -hex 20)
@@ -18,7 +48,7 @@ lxc exec $INSTANCE -- ufw allow proto tcp from 192.168.0.30 to any port 4949
 lxc file push /usr/local/etc/dhis/tomcat-users.xml $INSTANCE/etc/tomcat9/tomcat-users.xml
 lxc exec $INSTANCE -- sed -i "s/XXXXXX/$MANAGER_PASSWD/" /etc/tomcat9/tomcat-users.xml
 
-lxc exec $INSTANCE -- sed -i "$ a " $MUNIN_CONF
+lxc exec $INSTANCE -- sed -i "$ a \n" $MUNIN_CONF
 lxc exec $INSTANCE -- sed -i "$ a [tomcat_*]" $MUNIN_CONF
 lxc exec $INSTANCE -- sed -i "$ a env.ports 8080" $MUNIN_CONF
 lxc exec $INSTANCE -- sed -i "$ a env.request /manager/status?XML=true" $MUNIN_CONF
@@ -35,8 +65,8 @@ lxc exec $INSTANCE -- ln -s /usr/share/munin/plugins/tomcat_threads /etc/munin/p
 lxc exec $INSTANCE -- ln -s /usr/share/munin/plugins/tomcat_volume /etc/munin/plugins/tomcat_volume
 
 # Let monitor know about this node
-lxc exec $MONITOR -- sed -i -e "\$a[$INSTANCE.lxd]\n  address $IP\n  use_node_name yes\n" /etc/munin/munin.conf
+lxc exec $MONITOR -- sed -i -e "$ a \[$INSTANCE.lxd]\n  address $IP\n  use_node_name yes\n" /etc/munin/munin.conf
 
-ufw allow proto tcp from 192.168.0.30 to any port 4949
+sudo ufw allow proto tcp from 192.168.0.30 to any port 4949
 lxc exec $INSTANCE -- service munin-node restart
 lxc exec $MONITOR -- /etc/init.d/munin restart
