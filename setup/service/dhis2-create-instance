@@ -149,11 +149,14 @@ then
 fi
 
 # dealing with systemd security
-TCSYSLOG=$(lxc exec $NAME -- find /etc/rsyslog.d/ -iname *tomcat9.conf)
-# comment out catalina.out routing
-lxc exec $NAME -- sed -i 's/^/# /' $TCSYSLOG
-# allow service access to /opt/dhis2
-lxc exec $NAME -- sed -i '/^# Security/a ReadWritePaths="/opt/dhis2"' /etc/systemd/system/multi-user.target.wants/tomcat9.service
+cat <<EOF > /tmp/override.conf
+[Service]
+ReadWritePaths=/opt/dhis2
+Environment=DHIS2_HOME=/opt/dhis2
+#ReadWritePaths=/opt/glowroot
+EOF
+lxc exec $NAME -- mkdir /etc/systemd/system/tomcat9.service.d
+lxc file push /tmp/override.conf $NAME/etc/systemd/system/tomcat9.service.d/override.conf
 lxc exec $NAME -- systemctl daemon-reload
 lxc exec $NAME -- service rsyslog restart
 lxc exec $NAME -- service tomcat9 restart

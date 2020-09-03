@@ -48,7 +48,7 @@ lxc exec $INSTANCE -- ufw allow proto tcp from 192.168.0.30 to any port 4949
 lxc file push /usr/local/etc/dhis/tomcat-users.xml $INSTANCE/etc/tomcat9/tomcat-users.xml
 lxc exec $INSTANCE -- sed -i "s/XXXXXX/$MANAGER_PASSWD/" /etc/tomcat9/tomcat-users.xml
 
-lxc exec $INSTANCE -- sed -i "$ a \n" $MUNIN_CONF
+lxc exec $INSTANCE -- sed -i "$G" $MUNIN_CONF
 lxc exec $INSTANCE -- sed -i "$ a [tomcat_*]" $MUNIN_CONF
 lxc exec $INSTANCE -- sed -i "$ a env.ports 8080" $MUNIN_CONF
 lxc exec $INSTANCE -- sed -i "$ a env.request /manager/status?XML=true" $MUNIN_CONF
