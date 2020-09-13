@@ -121,6 +121,35 @@ Note the "--" is necessary.  It tells lxc exec that everything following (includ
 
 ## Post install tasks
 
+### Install and apply Lets Encrypt SSL certificate Generation
+To complete your setup of your DHIS2, configure Let's Encrypt SSL Certificate using the command beldow. This step was not automated so as to avoid being blocked by Let's Encrypt due to possible multiple attempts to generate an SSL certificate tied to the instance single domain name. To complete the setup, it is important that you execute the following commands in Proxy container.
+
+1. From your host machine, login into the proxy container
+
+`bob@localhost:$ sudo lxc exec proxy -- bash`
+
+2. Test your new SSL certificate using the command below. Note that the `--test-cert` option allows you to test as many times as you can until when you are ready to create a production certificate for use.
+
+`certbot certonly -d instructor.dhis2.org -m bob@dhis2.org --agree-tos --standalone --test-cert`
+
+3. When everything is working OK in step 2, delete and create a production SSL certificate using commands below. 
+
+```
+certbot delete
+certbot certonly -d instructor.dhis2.org -m bob@dhis2.org --agree-tos --standalone
+
+```
+
+4. For your certificate to take effect, restart your apache2 using command below
+`systemctl restart apache2` or `service apache2 restart`
+
+5. Configure Munin node on proxy using commands below. This will enable monitoring your proxy container from the Munin Monitoring container.
+
+```
+munin-node-configure --sh |sh
+service munin-node restart
+```
+
 ### Database
 The system should now be working, but you will probably want to tune your database a little to
 get the best performance from your available resources.  A good start would be to determine first what is the total amount of memory your machine has (see total memory after executing 'free -gh').  Let us proceed as though there is 32GB RAM in total.
