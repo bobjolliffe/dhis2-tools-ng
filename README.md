@@ -122,7 +122,7 @@ Note the "--" is necessary.  It tells lxc exec that everything following (includ
 ## Post install tasks
 
 ### Install and apply Lets Encrypt SSL certificate Generation
-To complete your setup of yor DHIS2, configure Let's Encrypt SSL Certificate using the command beldow. This step was not automated so as to avoid being blocked by Let's Encrypt due to possible multiple attempts to generate an SSL certificate tied to the instance single domain name. To complete the setup, it is important that you execute the following commands in Proxy container.
+To complete your setup of your DHIS2, configure Let's Encrypt SSL Certificate using the command beldow. This step was not automated so as to avoid being blocked by Let's Encrypt due to possible multiple attempts to generate an SSL certificate tied to the instance single domain name. To complete the setup, it is important that you execute the following commands in Proxy container.
 
 1. From your host machine, login into the proxy container
 
