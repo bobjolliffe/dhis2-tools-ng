@@ -13,6 +13,8 @@ if [[ $UFW_STATUS == "inactive" ]]; then
 	exit 1
 fi
 
+apt-get -y install unzip auditd jq
+
 # Parse json config file
 source parse_config.sh
 
