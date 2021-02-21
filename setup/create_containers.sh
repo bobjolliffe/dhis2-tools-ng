@@ -13,6 +13,10 @@ if [[ $UFW_STATUS == "inactive" ]]; then
 	exit 1
 fi
 
+# Make sure ufw is not blocking the lxd traffic
+ufw allow in on lxdbr0
+sudo ufw allow out on lxdbr0
+
 apt-get -y install unzip auditd jq
 
 # Parse json config file
