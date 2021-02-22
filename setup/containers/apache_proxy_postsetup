@@ -7,7 +7,4 @@ FQDN_REGEX=$(echo $FQDN |sed "s/\./\\\\\\\./g")
 cat configs/apache-dhis2.conf |sed "s/FQDNREGEX/${FQDN_REGEX}/" |sed "s/FQDN/${FQDN}/" |sed "s/EMAIL/${EMAIL}/" > /tmp/apache-dhis2.conf
 
 lxc file push /tmp/apache-dhis2.conf $NAME/etc/apache2/sites-available/apache-dhis2.conf
-lxc exec $NAME -- a2ensite apache-dhis2
 
-#lxc exec $NAME -- certbot certonly --non-interactive --standalone --agree-tos -m $EMAIL -d $FQDN
-#lxc exec $NAME -- service apache2 restart
