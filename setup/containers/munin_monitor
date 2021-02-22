@@ -48,7 +48,8 @@ fi
 
 EOF
 
-  # service apache2 restart
+  service apache2 restart
+
   ufw allow 80/tcp
   ufw allow 443/tcp
   ufw enable
