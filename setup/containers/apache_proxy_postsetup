@@ -1,5 +1,4 @@
 # setting up apache2 proxy
-lxc exec $NAME -- service apache2 stop
 lxc exec $NAME -- mkdir -p /etc/apache2/upstream
 
 # Replace placeholder values in template conf

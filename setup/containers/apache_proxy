@@ -1,8 +1,5 @@
 apt-get -y update
 apt-get -y upgrade
-apt-get install -y software-properties-common
-add-apt-repository -y ppa:certbot/certbot
-apt-get -y update
 
 apt-get -y install certbot
 apt-get -y install apache2

@@ -29,4 +29,5 @@ lxc exec proxy -- service apache2 stop
 lxc exec proxy -- certbot certonly --non-interactive --standalone --agree-tos -m $EMAIL -d $FQDN
 lxc exec proxy -- a2dissite 000-default
 lxc exec proxy -- a2ensite apache-dhis2
+lxc exec proxy -- service apache2 reload
 lxc exec proxy -- service apache2 start
