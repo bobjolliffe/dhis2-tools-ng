@@ -31,3 +31,6 @@ lxc exec proxy -- a2dissite 000-default
 lxc exec proxy -- a2ensite apache-dhis2
 lxc exec proxy -- service apache2 reload
 lxc exec proxy -- service apache2 start
+# setup auto renewal
+lxc exec proxy --  sed 's/0.*$/0 3 * * * root certbot renew --standalone --pre-hook="service apache2 stop" --post-hook="service apache2 start"'/ /etc/cron.d/certbot 
+
