@@ -1,0 +1,20 @@
+# Customize this file to suit your environment
+
+BACKUP_DIR=/var/pgbackups
+
+# For remote backup to work you need to setup a passwordless
+# key pair
+#REMOTE="remote:backups/"
+
+#PLAIN_BACKUPS="dhis hmis"
+#ENCRYPTED_BACKUPS="tracker"
+#PASSWORD_FILE="/usr/local/etc/dhis/passwd.pg"
+CIPHER="aes-256-cbc"
+
+# Keep Sunday's backup
+DAY_OF_WEEK_TO_KEEP=7
+WEEKS_TO_KEEP=3
+DAYS_TO_KEEP=7
+
+EXCLUDED="-T aggregated_* -T analytics_* -T completeness_*"
+

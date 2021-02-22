@@ -4,7 +4,7 @@ echo "Installing service scripts"
 cp service/* /usr/local/bin
 
 # set restricted permissions on copied files
-umask 177
+umask 137
 
 mkdir -p /usr/local/etc/dhis
 for FILE in $(find etc/*); do
@@ -15,6 +15,8 @@ for FILE in $(find etc/*); do
      cp $FILE /usr/local/etc/dhis
   fi
 done
+
+chown root:lxd /usr/local/etc/dhis/*
 
 if [ -f /etc/cron.d/dhis ]; then
   echo "DHIS2 cron already exists"
