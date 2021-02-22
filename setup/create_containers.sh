@@ -31,7 +31,6 @@ apt-get -y install unzip auditd jq
 # Parse json config file
 source parse_config.sh
 
-
 # set any environment variables for default profile in all containers
 # example TZ (timezone)
 for VAR in $ENVVARS; do
