@@ -8,14 +8,7 @@
 # http://wiki.postgresql.org/wiki/Automated_Backup_on_Linux
 ########################################################
 
-
-BACKUP_DIR=/var/pgbackups/postgres
-PLAIN_BACKUPS=dhis
-EXCLUDED="-T analytics_*" 
-#REMOTE=/media/NAS
-DAY_OF_WEEK_TO_KEEP=7
-WEEKS_TO_KEEP=6
-DAYS_TO_KEEP=7
+source /usr/local/etc/dhis/dhis2-env
 
 function perform_backups()
 {
@@ -45,6 +38,13 @@ function perform_backups()
         mv $FINAL_BACKUP_DIR"$DBNAME".sql.gz.enc.in_progress $FINAL_BACKUP_DIR"$DBNAME".sql.gz.enc
      fi
   done
+
+  # if a remote backup machine is defined, rsynch to it
+  if [ -n "$REMOTE" ]; then
+    rsync -avq $BACKUP_DIR/* $REMOTE
+  fi
+
+
 }
 
 # MONTHLY BACKUPS
