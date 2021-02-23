@@ -62,8 +62,20 @@ At this point your proxy, database and monitor servers should be up and running.
 +----------+---------+---------------------+------+------------+-----------+
 ```
 
-You should now be able to access your system by going to https://<your_domain_name>.  You shoud
+You should now be able to access your system by going to htt://<your_domain_name>.  You shoud
 see the default apache2 landing page (more on how to change this below).
+
+8.  Setting up SSL/TLS
+The reverse proxy has a configuration file which is setup
+to use SSL/TLS certificates from letsencrypt.org.  Previously
+this was part of the automatic install, but we decided to 
+make it a seperate step so that users can verify that their
+infrastructure is working properly before attempting to 
+acquite the letsencrypt certificate.  To install:
+
+8.1 Check with your browser that you can access the default apache2 landing page at http:///your fqdn>.  Only if this is is successful proceed to ...
+
+8.2  Run sudo ./ssl_setup.sh to run certbot to fetch and install your ssl certificate.
 
 If you encountered errors during the install, the easiest way to restart is just to run
 `./delete_all.sh`.  This will wipe all your containers and you can try again.
