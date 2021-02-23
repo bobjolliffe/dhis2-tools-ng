@@ -62,7 +62,7 @@ At this point your proxy, database and monitor servers should be up and running.
 +----------+---------+---------------------+------+------------+-----------+
 ```
 
-You should now be able to access your system by going to htt://<your_domain_name>.  You shoud
+You should now be able to access your system by going to http://<your_domain_name>.  You shoud
 see the default apache2 landing page (more on how to change this below).
 
 8.  Setting up SSL/TLS
@@ -73,7 +73,7 @@ make it a seperate step so that users can verify that their
 infrastructure is working properly before attempting to 
 acquite the letsencrypt certificate.  To install:
 
-8.1 Check with your browser that you can access the default apache2 landing page at http:///your fqdn>.  Only if this is is successful proceed to ...
+8.1 Double check with your browser that you can access the default apache2 landing page at http:///your fqdn>.  Only if this is is successful proceed to ...
 
 8.2  Run sudo ./ssl_setup.sh to run certbot to fetch and install your ssl certificate.
 
@@ -132,35 +132,6 @@ sudo lxc exec postgres -- psql -c 'select name,id from dataelement limit 5' hmis
 Note the "--" is necessary.  It tells lxc exec that everything following (including commandline switches like -c in this case) are to be interpreted as part of the remote command.
 
 ## Post install tasks
-
-### Install and apply Lets Encrypt SSL certificate Generation
-To complete your setup of your DHIS2, configure Let's Encrypt SSL Certificate using the command beldow. This step was not automated so as to avoid being blocked by Let's Encrypt due to possible multiple attempts to generate an SSL certificate tied to the instance single domain name. To complete the setup, it is important that you execute the following commands in Proxy container.
-
-1. From your host machine, login into the proxy container
-
-`bob@localhost:$ sudo lxc exec proxy -- bash`
-
-2. Test your new SSL certificate using the command below. Note that the `--test-cert` option allows you to test as many times as you can until when you are ready to create a production certificate for use.
-
-`certbot certonly -d instructor.dhis2.org -m bob@dhis2.org --agree-tos --standalone --test-cert`
-
-3. When everything is working OK in step 2, delete and create a production SSL certificate using commands below. 
-
-```
-certbot delete
-certbot certonly -d instructor.dhis2.org -m bob@dhis2.org --agree-tos --standalone
-
-```
-
-4. For your certificate to take effect, restart your apache2 using command below
-`systemctl restart apache2` or `service apache2 restart`
-
-5. Configure Munin node on proxy using commands below. This will enable monitoring your proxy container from the Munin Monitoring container.
-
-```
-munin-node-configure --sh |sh
-service munin-node restart
-```
 
 ### Database
 The system should now be working, but you will probably want to tune your database a little to
