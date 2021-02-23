@@ -1,5 +1,9 @@
 # Encrypting data disk for postgresql
 
+(Note: these notes for setting up luks are deprecated.  They
+should still be accurate, but its now much easier to use
+native encryption on zfs filesyatem)
+
 ## Goal
 In order to achieve encryption at rest we need to create an encryptedpartionion.  In our linode we have reserved /dev/sdd for this purpose.
 

@@ -9,9 +9,19 @@
 
 set -e
 
+PROG=`basename $0`
 TEMPWAR=/tmp/dhis.war
 
-while getopts :l:f: opt;
+usage() {
+  echo "Usage: $PROG [options] <instance>"
+  echo "  instance: name of the instance to deploy to"
+  echo "Options:"
+  echo "  -l        http/https URL of war file to deploy"
+  echo "  -f        file path to war file to deploy"
+  echo "  -h, --help       Display this help message"
+}
+
+while getopts :l:fh opt;
 do
   case $opt in
     f)
@@ -22,21 +32,27 @@ do
       SOURCE=$OPTARG
       ;;
     \?)
-      echo "Invalid option -$opt" >&2
-      exit 1;
-      ;;
+       echo "Invalid option -$opt" >&2
+       usage; exit 1;;
     :)
-      echo "Option -$opt requires an argument." >&2
-      exit 1
+       echo "Option -$opt requires an argument." >&2
+       usage; exit 1;;
+    h) usage; exit 1;;
+
   esac
 done
 
 shift $(( $OPTIND-1 ))
 
+if [ "$#" -ne 1 ]; then
+  usage
+  exit 1
+fi
+
 INSTANCE=$1
 
 # download war file if we don't have it
-test -f $TEMPWAR || wget -O $TEMPWAR $SOURCE
+test -f $TEMPWAR || wget -O $TEMPWAR $SOURCE  || usage; exit 1
 unzip -t -q $TEMPWAR || { echo "Corrupt war file: $TEMPWAR"; exit 1; }
 
 lxc exec $1 -- service tomcat9 stop

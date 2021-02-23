@@ -1,6 +1,6 @@
 # DHIS2 Installation on a Server Server
 
-> *This guide is applicable to debian or Ubuntu Operating systems. Tested tow work on Ubuntu 18.04*
+> *This guide is applicable to debian or Ubuntu Operating systems. Tested to work on Ubuntu 18.04*
 
 This is a brief guide to prepare your new server (Server Birthing process and cleanup) for DHIS2 installation.
 
@@ -53,10 +53,10 @@ This is a brief guide to prepare your new server (Server Birthing process and cl
      sudo chmod 0600 ~/.ssh/authorized_keys
      ```
      
-     Using your prefered SSHL client software, confirm that you can login using the SSH Key before proceding to the next section. 
+     Using your prefered SSH client software, confirm that you can login using the SSH Key before proceding to the next section. 
      > Logout of the server and login back to the server using SSH key
      
-     The next step is for us to prevent root access and password Authentication using SSH. This will allow us to only accept login using SSH keys for a user except root.
+     The next step is for us to prevent root access and password authentication using SSH. This will allow us to only accept login using SSH keys for a user except root.
      
      As a sudo user, edit the SSH configuration file found normally at `/etc/ssh/sshd_config` using your favorite editor (e.g. `sudo vi /etc/ssh/sshd_config`) and change the following:
      - `PasswordAuthentication yes` to `PassswordAuthentication no`
@@ -65,20 +65,27 @@ This is a brief guide to prepare your new server (Server Birthing process and cl
      Run the command below to effect the new changes for SSH server
      
      ```
-     sudo systemctl restart sshd
+     sudo service ssh restart
      ```
      
      Verify that root login is no longer allowed and that `<username>` can login using public key and NOT using password
       > Logout of the server and login back to the server using SSH key for the  new `<username>` account. 
-      > If you protected your key, you might be asked to provide the password for Key. Note that this password is not a normal system user password
+      > If you protected your private key, you will be asked to provide the password for Key. Note that this password is not a normal system user password
      
-     Next step then is to change the SSH default port 22 to any number below 1024. Numbers below 1024 are recommended because they will require root access to execute tasks.
+     Changing the port that ssh listens on is optional. It provides no great security
+     advantage, but will deter a lot of random attack attempts filling your logs. If
+     you do change the port be careful not to lock yourself out with internal or
+     external firewalls!
+
+     Here is how to change the SSH default port 22 to any number below 1024. Numbers below 1024 are recommended to avoid the possibility of a non-privileged user running
+     a fake sshd and capturing your traffic.
+
      To change the port number, edit the SSH configuration file `/etc/ssh/sshd_config` and uncomment the `#Port 22` to `Port 22` then change the 22 to any number of your choice, e.g. 822. Your new Port will be `Port 822`. Save and exit.
      
      Run the command below to effect the new changes for SSH server
      
      ```
-     sudo systemctl restart sshd
+     sudo service ssh restart
      ```
      
      verify that your new port works before proceding to the next stage. 
@@ -95,12 +102,14 @@ This is a brief guide to prepare your new server (Server Birthing process and cl
       sudo ufw enable
       ```
   * ### Install git on your server
-  To be able to install dhis2-tools-ng on the server, install git using the command below
+  Depending how and from where your server was provisioned, you may not have git
+  installed by default.  To be able to install dhis2-tools-ng on the server, install
+  git using the command below
   ```
   sudo apt-get install git
   ```
   
-  > At this point your server is ready for DHIS2 installation and made secure. Proceed to the next stage as described in the [README.md](./README.md)
+  > At this point your server is ready for DHIS2 installation and made secure. Proceed to the next stage as described in the [README.md](../README.md)
 
      
 

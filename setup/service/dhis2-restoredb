@@ -1,7 +1,27 @@
-#!/usr/bin/env bash
+#!/bin/sh
+#       ____  __  ______________
+#      / __ \/ / / /  _/ ___/__ \
+#     / / / / /_/ // / \__ \__/ /
+#    / /_/ / __  // / ___/ / __/
+#   /_____/_/ /_/___//____/____/
+#
+#   DHIS2 restore database backup
 
+set -e
+
+PROG=`basename $0`
 BACKUPFILE=$1
 DB=$2
+
+usage() {
+  echo "Usage: $PROG <backup file (tar.gz)> <dbname>"
+  echo "  backup file: database dump in tar gzip format"
+  echo "  dbname: the name of the database to restore"
+  echo "Options:"
+  echo "  -h, --help       Display this help message"
+}
+
+
 
 sudo lxc exec postgres dropdb $DB
 sudo lxc exec postgres -- createdb -O $DB $DB
