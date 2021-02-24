@@ -4,7 +4,7 @@ set -e
 apt-get -y update
 apt-get -y upgrade
 
-snap install --stable lxd 
+snap install lxd --channel=4.0/stable
 
 # initializing lxd system
 cat configs/lxd_preseed | sudo lxd init --preseed
