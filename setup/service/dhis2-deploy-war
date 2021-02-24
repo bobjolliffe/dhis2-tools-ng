@@ -52,7 +52,7 @@ fi
 INSTANCE=$1
 
 # download war file if we don't have it
-test -f $TEMPWAR || wget -O $TEMPWAR $SOURCE  || usage; exit 1
+test -f $TEMPWAR || wget -O $TEMPWAR $SOURCE  || exit 1
 unzip -t -q $TEMPWAR || { echo "Corrupt war file: $TEMPWAR"; exit 1; }
 
 lxc exec $1 -- service tomcat9 stop
