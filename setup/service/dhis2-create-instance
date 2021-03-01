@@ -149,7 +149,7 @@ then
 fi
 
 lxc file push /usr/local/etc/dhis/tomcat_default $NAME/etc/default/tomcat9
-lxc exec -- $NAME -- chmod 644 /etc/default/tomcat9
+lxc exec $NAME -- chmod 644 /etc/default/tomcat9
 lxc exec $NAME -- systemctl daemon-reload
 lxc exec $NAME -- service rsyslog restart
 lxc exec $NAME -- service tomcat9 restart
