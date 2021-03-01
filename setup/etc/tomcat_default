@@ -1,0 +1,25 @@
+JAVA_OPTS="-Djava.awt.headless=true"
+
+# Set desired HEAP size here.  By default jvm will assume that it can
+# use up 25% of the memory it sees.  Better to set explicitly.
+# For production instances, set minimum size the same as maximum
+# JAVA_OPTS="${JAVA_OPTS} -Xmx16G -Xms16G"
+
+# Important to give the jvm a reliable, non-blocking, source of
+# randomness.  See eg https://stackoverflow.com/questions/58991966/what-java-security-egd-option-is-for
+JAVA_OPTS="${JAVA_OPTS} -Djava.security.egd=file:/dev/./urandom"
+
+
+# Pick a garbage collector
+# G1GC should be best, though sometimes heavy on CPU when a lot of GC is
+# happening.  Under those circumstances, you might want to try ParallelGC
+JAVA_OPTS="${JAVA_OPTS} -XX:+UseG1GC"
+#JAVA_OPTS="${JAVA_OPTS} -XX:+UseParallelGC"
+
+# In case of excessive GC requirements you might want to allow GC more time
+# to do its work
+JAVA_OPTS="${JAVA_OPTS} -XX:MaxGCPauseMillis=1500 -XX:GCTimeRatio=9 
+
+# In case you want to enable glowroot profiling
+# JAVA_OPTS="{JAVA_OPTS} -javaagent:/opt/glowroot/glowroot.jar"
+

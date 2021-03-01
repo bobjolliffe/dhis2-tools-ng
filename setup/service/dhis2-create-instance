@@ -148,15 +148,8 @@ then
   lxc exec $NAME -- sed -i "s/^connection.url.*$/connection.url = jdbc:postgresql:\/\/$PG\/$NAME/" /opt/dhis2/dhis.conf
 fi
 
-# dealing with systemd security
-cat <<EOF > /tmp/override.conf
-[Service]
-ReadWritePaths=/opt/dhis2
-Environment=DHIS2_HOME=/opt/dhis2
-#ReadWritePaths=/opt/glowroot
-EOF
-lxc exec $NAME -- mkdir /etc/systemd/system/tomcat9.service.d
-lxc file push /tmp/override.conf $NAME/etc/systemd/system/tomcat9.service.d/override.conf
+lxc file push /usr/local/etc/dhis/tomcat_default $NAME/etc/default/tomcat9
+lxc exec -- $NAME -- chmod 644 /etc/default/tomcat9
 lxc exec $NAME -- systemctl daemon-reload
 lxc exec $NAME -- service rsyslog restart
 lxc exec $NAME -- service tomcat9 restart
