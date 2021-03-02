@@ -13,7 +13,10 @@ chown -R tomcat.tomcat /opt/dhis2
 echo "tomcat" >> /etc/cron.deny
 echo "tomcat" >> /at.deny
 
-mkdir /etc/systemd/system/tomcat.service.d
+mkdir /opt/glowroot
+chown -R tomcat.tomcat /opt/glowroot
+
+mkdir /etc/systemd/system/tomcat9.service.d
 
 ########################################################################
 # Config files
