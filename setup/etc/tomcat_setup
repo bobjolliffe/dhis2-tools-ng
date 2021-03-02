@@ -194,6 +194,20 @@ cat << EOF > /etc/tomcat9/server.xml
             remoteIpProxiesHeader="x-forwarded-by"
             protocolHeader="x-forwarded-proto"
         />
+
+        <!-- Access log processes all example.
+             Documentation at: /docs/config/valve.html
+             Note: The pattern used is equivalent to using pattern="common" -->
+<!--        <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
+               prefix="localhost_access_log" suffix=".txt"
+               pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+-->
+
+        <!-- reduce information disclosure on error pages -->
+        <Valve className="org.apache.catalina.valves.ErrorReportValve"
+               showReport="false"
+               showServerInfo="false"/>
+
       </Host>
     </Engine>
   </Service>
