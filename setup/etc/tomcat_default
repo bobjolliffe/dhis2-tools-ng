@@ -21,5 +21,5 @@ JAVA_OPTS="${JAVA_OPTS} -XX:+UseG1GC"
 JAVA_OPTS="${JAVA_OPTS} -XX:MaxGCPauseMillis=1500 -XX:GCTimeRatio=9" 
 
 # In case you want to enable glowroot profiling
-# JAVA_OPTS="{JAVA_OPTS} -javaagent:/opt/glowroot/glowroot.jar"
+# JAVA_OPTS="${JAVA_OPTS} -javaagent:/opt/glowroot/glowroot.jar"
 

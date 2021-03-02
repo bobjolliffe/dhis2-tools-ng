@@ -19,7 +19,7 @@ mkdir /etc/systemd/system/tomcat.service.d
 # Config files
 # 1.  override for tomcat9 under systemd
 #
-cat << EOF > /etc/systemd/system/tomcat.service.d/override.conf
+cat << EOF > /etc/systemd/system/tomcat9.service.d/override.conf
 [Service]
 ReadWritePaths=/opt/dhis2
 ReadWritePaths=/opt/glowroot
