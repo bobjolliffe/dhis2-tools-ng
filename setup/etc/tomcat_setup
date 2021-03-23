@@ -29,6 +29,9 @@ ReadWritePaths=/opt/glowroot
 ReadWritePaths=/var/log/tomcat9
 EOF
 
+#Reload the systemd manager
+systemctl daemon-reload
+
 # 2.  dhis.conf file
 #
 cat << EOF > /opt/dhis2/dhis.conf
