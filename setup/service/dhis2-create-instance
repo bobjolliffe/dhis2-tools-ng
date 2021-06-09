@@ -175,8 +175,10 @@ then
       proxy_set_header X-Real-IP \$remote_addr;
       proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
       proxy_set_header X-Forwarded-Proto  \$scheme;
-	  proxy_hide_header X-Powered-By;
-	  proxy_hide_header Server;
+      proxy_hide_header X-Frame-Options;
+      proxy_hide_header strict-transport-security;
+      proxy_hide_header x-content-type-options;
+      proxy_hide_header x-xss-protection;
 
       proxy_connect_timeout  480s;
       proxy_read_timeout     480s;
