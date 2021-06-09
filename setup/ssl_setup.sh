@@ -38,14 +38,15 @@ ssl_certificate_key /etc/letsencrypt/live/${FQDN}/privkey.pem;
 EOF
 
 	lxc file push /tmp/ssl-files.conf proxy/etc/nginx/conf.d/ssl-files.conf
-	#rm /tmp/ssl-files.conf
+	rm /tmp/ssl-files.conf
 	
-	cat configs/nginx-dhis2.conf |sed "s/FQDN/${FQDN}/" > /tmp/nginx.conf
+	cat configs/nginx-dhis2.conf > /tmp/nginx.conf
 	sed -i "s/listen 80;/listen 443 ssl http2;/g" /tmp/nginx.conf
-	sed -i "s/#REDIRECT //g" /tmp/nginx.conf
+	sed -i "/^  # Main server block.*/i  # Redirect http to https\n  server {\n    listen 80 ;\n    server_name FQDN;\n    return 301 https://\$host\$request_uri;\n  }\n" /tmp/nginx.conf
+	sed -i "s/FQDN/${FQDN}/" /tmp/nginx.conf
 
 	lxc file push /tmp/nginx.conf proxy/etc/nginx/nginx.conf
-	#rm /tmp/nginx.conf
+	rm /tmp/nginx.conf
 	# setup auto renewal
 	lxc exec proxy --  echo '0 3 * * * root certbot renew --standalone --pre-hook="service nginx stop" --post-hook="service nginx start"/' > /etc/cron.d/certbot
 
