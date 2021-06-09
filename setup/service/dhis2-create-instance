@@ -159,34 +159,51 @@ sudo sed -i "/$IP/d" /etc/hosts
 sudo sed -i "$ a\
   $IP $NAME" /etc/hosts
 
-hosts="$host";
-remote_addr="$remote_addr";
-proxy_add_x_forwarded_for="$proxy_add_x_forwarded_for";
+
+PROXY=$(cat configs/containers.json| jq -r .proxy)
+
+if [ $PROXY=="nginx" ]
+then
 #if proxy is nginx ;
-#cat <<EOF > /tmp/${NAME}
-#    # Proxy pass to servlet container
+  cat <<EOF > /tmp/${NAME}.conf
+    # Proxy pass to servlet container
 
-#    location /${NAME} {
-#    proxy_pass                http://${IP}:8080/${NAME};
-#    proxy_redirect            off;
-#    proxy_set_header Host \$hosts;
-#    proxy_set_header X-Real-IP \$remote_addr;
-#    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-#    proxy_set_header X-Forwarded-Proto  http;
-#   }
-#EOF
+    location /${NAME} {
+      proxy_pass                http://${IP}:8080/${NAME};
+      proxy_redirect            off;
+      proxy_set_header Host \$host;
+      proxy_set_header X-Real-IP \$remote_addr;
+      proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto  \$scheme;
+	  proxy_hide_header X-Powered-By;
+	  proxy_hide_header Server;
 
+      proxy_connect_timeout  480s;
+      proxy_read_timeout     480s;
+      proxy_send_timeout     480s;
 
-# if proxy is apache2; then ....
-cat <<EOF > /tmp/${NAME}
-<Location /${NAME}>
-  Require all granted
-  ProxyPass "http://${IP}:8080/${NAME}"
-  ProxyPassReverse "http://${IP}:8080/${NAME}"
-</Location>
+      proxy_buffer_size        128k;
+      proxy_buffers            8 128k;
+      proxy_busy_buffers_size  256k;
+   }
 EOF
 
-lxc file push /tmp/${NAME} proxy/etc/apache2/upstream/${NAME}
-rm /tmp/${NAME}
-lxc exec proxy -- service apache2 restart
+  lxc file push /tmp/${NAME}.conf proxy/etc/nginx/upstream/${NAME}.conf
+  rm /tmp/${NAME}.conf
+  lxc exec proxy -- service nginx restart
+else
+  # if proxy is apache2; then ....
+  cat <<EOF > /tmp/${NAME}
+  <Location /${NAME}>
+    Require all granted
+    ProxyPass "http://${IP}:8080/${NAME}"
+    ProxyPassReverse "http://${IP}:8080/${NAME}"
+  </Location>
+EOF
+
+  lxc file push /tmp/${NAME} proxy/etc/apache2/upstream/${NAME}
+  rm /tmp/${NAME}
+  lxc exec proxy -- service apache2 restart
+fi
+
 
