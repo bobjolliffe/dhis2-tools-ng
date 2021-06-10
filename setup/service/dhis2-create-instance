@@ -148,7 +148,24 @@ then
   lxc exec $NAME -- sed -i "s/^connection.url.*$/connection.url = jdbc:postgresql:\/\/$PG\/$NAME/" /opt/dhis2/dhis.conf
 fi
 
-lxc file push /usr/local/etc/dhis/tomcat_default $NAME/etc/default/tomcat9
+APM=$(cat configs/containers.json| jq -r .apm)
+
+if [[ $APM == glowroot ]]; 
+then
+  sed -r '/glowroot.jar/ s/..(.*)/\1/' /usr/local/etc/dhis/tomcat_default > /tmp/tomcat9
+  lxc file push /tmp/tomcat9 $NAME/etc/default/tomcat9
+  lxc exec $NAME -- wget -P /opt https://github.com/glowroot/glowroot/releases/download/v0.13.6/glowroot-0.13.6-dist.zip 
+  lxc exec $NAME -- unzip -o /opt/glowroot-0.13.6-dist.zip -d /opt
+  sed "s/XXXX/${NAME}/" configs/glowroot-admin.json > /tmp/glowroot-admin.json
+  lxc file push /tmp/glowroot-admin.json $NAME/opt/glowroot/admin.json
+  lxc exec $NAME -- chown -R tomcat.tomcat /opt/
+  lxc exec $NAME ufw allow proto tcp from 192.168.0.2 to any port 4000
+
+  rm /tmp/tomcat9
+  rm /tmp/glowroot-admin.json
+else
+  lxc file push /usr/local/etc/dhis/tomcat_default $NAME/etc/default/tomcat9
+fi
 lxc exec $NAME -- chmod 644 /etc/default/tomcat9
 lxc exec $NAME -- systemctl daemon-reload
 lxc exec $NAME -- service rsyslog restart
@@ -175,10 +192,8 @@ then
       proxy_set_header X-Real-IP \$remote_addr;
       proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
       proxy_set_header X-Forwarded-Proto  \$scheme;
-      proxy_hide_header X-Frame-Options;
-      proxy_hide_header strict-transport-security;
-      proxy_hide_header x-content-type-options;
-      proxy_hide_header x-xss-protection;
+	  proxy_hide_header X-Powered-By;
+	  proxy_hide_header Server;
 
       proxy_connect_timeout  480s;
       proxy_read_timeout     480s;
@@ -192,6 +207,36 @@ EOF
 
   lxc file push /tmp/${NAME}.conf proxy/etc/nginx/upstream/${NAME}.conf
   rm /tmp/${NAME}.conf
+  
+  if [[ $APM == glowroot ]]; 
+  then
+    cat <<EOF > /tmp/${NAME}-glowroot.conf
+    # Proxy pass to servlet container
+
+    location /${NAME}-glowroot {
+      proxy_pass                http://${IP}:4000/${NAME}-glowroot;
+      proxy_redirect            off;
+      proxy_set_header Host \$host;
+      proxy_set_header X-Real-IP \$remote_addr;
+      proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto  \$scheme;
+	  proxy_hide_header X-Powered-By;
+	  proxy_hide_header Server;
+
+      proxy_connect_timeout  480s;
+      proxy_read_timeout     480s;
+      proxy_send_timeout     480s;
+
+      proxy_buffer_size        128k;
+      proxy_buffers            8 128k;
+      proxy_busy_buffers_size  256k;
+   }
+EOF
+
+    lxc file push /tmp/${NAME}-glowroot.conf proxy/etc/nginx/upstream/${NAME}-glowroot.conf
+    rm /tmp/${NAME}-glowroot.conf
+  fi
+  
   lxc exec proxy -- service nginx restart
 else
   # if proxy is apache2; then ....
