@@ -11,6 +11,11 @@ PROG=`basename $0`
 CREATEDB=true
 TOMCAT_SETUP=/usr/local/etc/dhis/tomcat_setup
 
+# Maybe source parse_config.sh
+APM=$(cat configs/containers.json| jq -r .apm)
+PROXY=$(cat configs/containers.json| jq -r .proxy)
+PROXY_IP=$(cat configs/containers.json| jq -r '.containers[] | select(.name=="proxy") | .ip')
+
 GUESTOS=20.04
 
 ###############################################################
@@ -139,7 +144,10 @@ while true ; do
   lxc exec $NAME -- nslookup archive.ubuntu.com >/dev/null && break || echo waiting for network; sleep 1 ;
 done
 
-cat $TOMCAT_SETUP | lxc exec $NAME -- bash
+# Added PROXY_IP to tomcat_setup
+sed "s/PROXY_IP/${PROXY_IP}/" $TOMCAT_SETUP > /tmp/tomcat_setup
+cat /tmp/tomcat_setup | lxc exec $NAME -- bash
+#rm /tmp/tomcat_setup
 
 if [ $CREATEDB ]
 then	
@@ -147,8 +155,6 @@ then
   lxc exec $NAME -- sed -i "s/^connection.password.*$/connection.password = $PASSWD/" /opt/dhis2/dhis.conf
   lxc exec $NAME -- sed -i "s/^connection.url.*$/connection.url = jdbc:postgresql:\/\/$PG\/$NAME/" /opt/dhis2/dhis.conf
 fi
-
-APM=$(cat configs/containers.json| jq -r .apm)
 
 if [[ $APM == glowroot ]]; 
 then
@@ -159,7 +165,7 @@ then
   sed "s/XXXX/${NAME}/" configs/glowroot-admin.json > /tmp/glowroot-admin.json
   lxc file push /tmp/glowroot-admin.json $NAME/opt/glowroot/admin.json
   lxc exec $NAME -- chown -R tomcat.tomcat /opt/
-  lxc exec $NAME ufw allow proto tcp from 192.168.0.2 to any port 4000
+  lxc exec $NAME ufw allow proto tcp from $PROXY_IP to any port 4000
 
   rm /tmp/tomcat9
   rm /tmp/glowroot-admin.json
@@ -175,9 +181,6 @@ lxc exec $NAME -- service tomcat9 restart
 sudo sed -i "/$IP/d" /etc/hosts
 sudo sed -i "$ a\
   $IP $NAME" /etc/hosts
-
-
-PROXY=$(cat configs/containers.json| jq -r .proxy)
 
 if [ $PROXY=="nginx" ]
 then

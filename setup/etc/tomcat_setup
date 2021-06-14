@@ -18,6 +18,9 @@ chown -R tomcat.tomcat /opt/glowroot
 
 mkdir /etc/systemd/system/tomcat9.service.d
 
+# Maybe source parse_config.sh
+PROXY_IP==$(cat configs/containers.json| jq -r '.containers[] | select(.name=="proxy") | .ip')
+
 ########################################################################
 # Config files
 # 1.  override for tomcat9 under systemd
@@ -220,6 +223,8 @@ cat << EOF > /etc/tomcat9/server.xml
 </Server>
 EOF
 
-ufw allow proto tcp from 192.168.0.2 to any port 8080  
+
+ufw allow proto tcp from $PROXY_IP to any port 8080  
 ufw enable
+
 
