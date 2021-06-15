@@ -59,6 +59,6 @@ elif [[ $PROXY == apache ]]; then
 	lxc exec proxy -- service apache2 reload
 	lxc exec proxy -- service apache2 start
 	# setup auto renewal
-	lxc exec proxy --  echo '0 3 * * * root certbot renew --standalone --pre-hook="service nginx stop" --post-hook="service nginx start"/' > /etc/cron.d/certbot
+	lxc exec proxy --  echo '0 3 * * * root certbot renew --standalone --pre-hook="service apache2 stop" --post-hook="service apache2 start"/' > /etc/cron.d/certbot
 
 fi
