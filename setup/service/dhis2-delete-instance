@@ -8,6 +8,9 @@
 #   Script to completely remove a dhis2 instance
 
 PROG=`basename $0`
+# Maybe source parse_config.sh
+APM=$(cat configs/containers.json| jq -r .apm)
+PROXY=$(cat configs/containers.json| jq -r .proxy)
 
 ###############################################################
 usage() {
@@ -36,7 +39,27 @@ fi
 NAME=$1
 DBCONTAINER=${2:-postgres}
 
-lxc exec proxy -- rm /etc/apache2/upstream/${NAME}
+if [[ $PROXY == "nginx" ]];
+then
+  lxc exec proxy -- rm /etc/nginx/upstream/${NAME}.conf
+  if [[ $APM == "glowroot" ]]; 
+  then
+    lxc exec proxy -- rm /etc/nginx/upstream/${NAME}-glowroot.conf
+  fi
+  lxc exec proxy -- service nginx restart
+elif [[ $PROXY == "apache" ]];
+then
+  lxc exec proxy -- rm /etc/apache2/upstream/${NAME}
+  if [[ $APM == "glowroot" ]]; 
+  then
+    lxc exec proxy -- rm /etc/apache2/upstream/${NAME}-glowroot
+  fi
+  lxc exec proxy -- service apache2 restart
+else
+  echo "Error: Proxy type not supported"
+  exit 1
+fi
+
 lxc stop $NAME
 lxc delete $NAME
 
@@ -44,3 +67,4 @@ lxc exec ${DBCONTAINER} -- dropdb $NAME
 lxc exec ${DBCONTAINER} -- dropuser $NAME
 
 sudo sed -i "/.* $N$/d" /etc/hosts
+

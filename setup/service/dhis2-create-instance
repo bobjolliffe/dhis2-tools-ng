@@ -156,7 +156,7 @@ then
   lxc exec $NAME -- sed -i "s/^connection.url.*$/connection.url = jdbc:postgresql:\/\/$PG\/$NAME/" /opt/dhis2/dhis.conf
 fi
 
-if [[ $APM == glowroot ]]; 
+if [[ $APM == "glowroot" ]]; 
 then
   sed -r '/glowroot.jar/ s/..(.*)/\1/' /usr/local/etc/dhis/tomcat_default > /tmp/tomcat9
   lxc file push /tmp/tomcat9 $NAME/etc/default/tomcat9
@@ -182,7 +182,8 @@ sudo sed -i "/$IP/d" /etc/hosts
 sudo sed -i "$ a\
   $IP $NAME" /etc/hosts
 
-if [ $PROXY=="nginx" ]
+
+if [[ $PROXY == "nginx" ]];
 then
 #if proxy is nginx ;
   cat <<EOF > /tmp/${NAME}.conf
@@ -211,7 +212,7 @@ EOF
   lxc file push /tmp/${NAME}.conf proxy/etc/nginx/upstream/${NAME}.conf
   rm /tmp/${NAME}.conf
   
-  if [[ $APM == glowroot ]]; 
+  if [[ $APM == "glowroot" ]]; 
   then
     cat <<EOF > /tmp/${NAME}-glowroot.conf
     # Proxy pass to servlet container
@@ -241,8 +242,9 @@ EOF
   fi
   
   lxc exec proxy -- service nginx restart
-else
-  # if proxy is apache2; then ....
+elif [[ $PROXY == "apache" ]];
+then
+#if proxy is apache2 ;
   cat <<EOF > /tmp/${NAME}
   <Location /${NAME}>
     Require all granted
@@ -253,7 +255,25 @@ EOF
 
   lxc file push /tmp/${NAME} proxy/etc/apache2/upstream/${NAME}
   rm /tmp/${NAME}
+  
+  if [[ $APM == "glowroot" ]]; 
+  then
+    cat <<EOF > /tmp/${NAME}-glowroot
+  <Location /${NAME}-glowroot>
+    Require all granted
+    ProxyPass "http://${IP}:4000/${NAME}-glowroot"
+    ProxyPassReverse "http://${IP}:4000/${NAME}-glowroot"
+  </Location>
+EOF
+
+    lxc file push /tmp/${NAME}-glowroot proxy/etc/apache2/upstream/${NAME}-glowroot
+    rm /tmp/${NAME}-glowroot
+  fi
+  
   lxc exec proxy -- service apache2 restart
+else
+  echo "Error: Proxy type not supported"
+  exit 1
 fi
 
 
