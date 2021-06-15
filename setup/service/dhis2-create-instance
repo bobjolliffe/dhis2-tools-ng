@@ -242,7 +242,7 @@ EOF
   fi
   
   lxc exec proxy -- service nginx restart
-elif [[ $PROXY == "apache" ]];
+elif [[ $PROXY == "apache2" ]];
 then
 #if proxy is apache2 ;
   cat <<EOF > /tmp/${NAME}

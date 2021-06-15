@@ -47,7 +47,7 @@ then
     lxc exec proxy -- rm /etc/nginx/upstream/${NAME}-glowroot.conf
   fi
   lxc exec proxy -- service nginx restart
-elif [[ $PROXY == "apache" ]];
+elif [[ $PROXY == "apache2" ]];
 then
   lxc exec proxy -- rm /etc/apache2/upstream/${NAME}
   if [[ $APM == "glowroot" ]]; 
