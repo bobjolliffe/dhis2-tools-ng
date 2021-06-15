@@ -76,8 +76,8 @@ for CONTAINER in $CONTAINERS; do
 
   if [[ $MONITORING == munin ]] && [[ $TYPE != munin_monitor ]]; then
 	lxc exec $NAME -- apt-get install -y munin-node
-        lxc exec $NAME -- sed -i -e "\$acidr_allow 192.168.0.30/32\n" /etc/munin/munin-node.conf
-	lxc exec $NAME -- ufw allow proto tcp from 192.168.0.30 to any port 4949
+        lxc exec $NAME -- sed -i -e "\$acidr_allow $MUNIN_IP/32\n" /etc/munin/munin-node.conf
+	lxc exec $NAME -- ufw allow proto tcp from $MUNIN_IP to any port 4949
 	lxc exec $NAME -- service munin-node restart
   fi
 
@@ -103,10 +103,11 @@ if [[ $MONITORING == munin ]]; then
   done
   # Also monitor the host
   sudo apt-get install munin-node -y
-  sudo echo "cidr_allow 192.168.0.30/32" >> /etc/munin/munin-node.conf
-  sudo ufw allow proto tcp from 192.168.0.30 to any port 4949
+  sudo echo "cidr_allow $MUNIN_IP/32" >> /etc/munin/munin-node.conf
+  sudo ufw allow proto tcp from $MUNIN_IP to any port 4949
   sudo service munin-node restart
 
   lxc exec monitor -- /etc/init.d/munin restart
 fi
+
 

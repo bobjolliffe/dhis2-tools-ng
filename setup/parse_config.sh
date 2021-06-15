@@ -12,6 +12,8 @@ NETWORK=$(echo $CONFIG | jq -r .network)
 MONITORING=$(echo $CONFIG | jq -r .monitoring)
 APM=$(echo $CONFIG | jq -r .apm)
 PROXY=$(echo $CONFIG| jq -r .proxy)
+PROXY_IP=$(cat configs/containers.json| jq -r '.containers[] | select(.name=="proxy") | .ip')
+MUNIN_IP=$(cat configs/containers.json| jq -r '.containers[] | select(.name=="monitor") | .ip')
 ENCDEVICE=$(echo $CONFIG | jq -r .encrypted_device)
 ENVIRONMENT=$(cat configs/containers.json |jq ".environment")
 if [[ ! $ENVIRONMENT == "null" ]]; then
@@ -32,9 +34,19 @@ case $MONITORING in
           ;;
 esac
 
+case $APM in
+     glowroot)
+          # echo "Using glowroot monitor"
+          ;;
+     *)
+          echo "$APM not supported yet"
+          ;;
+esac
+
 for TYPE in $TYPES; do
   if [ ! -f "containers/$TYPE" ]; then 
 	  echo "Profile for $TYPE doesn't exist .. aborting"
 	  exit 1
   fi
 done 
+
