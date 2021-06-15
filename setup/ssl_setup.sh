@@ -25,7 +25,7 @@ select yn in "Yes" "No"; do
     esac
 done
 
-if [[ $PROXY == nginx ]]; then
+if [[ $PROXY == "nginx" ]]; then
 	lxc exec proxy -- service nginx stop
 	lxc exec proxy -- certbot certonly -d $FQDN --standalone -m $EMAIL --agree-tos -n --no-eff-email
 
@@ -51,7 +51,7 @@ EOF
 	lxc exec proxy --  echo '0 3 * * * root certbot renew --standalone --pre-hook="service nginx stop" --post-hook="service nginx start"/' > /etc/cron.d/certbot
 
 	lxc exec proxy -- service nginx start
-elif [[ $PROXY == apache ]]; then
+elif [[ $PROXY == "apache2" ]]; then
 	lxc exec proxy -- service apache2 stop 
 	lxc exec proxy -- certbot certonly --non-interactive --standalone --agree-tos -m $EMAIL -d $FQDN
 	lxc exec proxy -- a2dissite 000-default
