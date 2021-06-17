@@ -11,10 +11,9 @@ PROG=`basename $0`
 CREATEDB=true
 TOMCAT_SETUP=/usr/local/etc/dhis/tomcat_setup
 
-# Maybe source parse_config.sh
-APM=$(cat configs/containers.json| jq -r .apm)
-PROXY=$(cat configs/containers.json| jq -r .proxy)
-PROXY_IP=$(cat configs/containers.json| jq -r '.containers[] | select(.name=="proxy") | .ip')
+APM=$(cat /usr/local/etc/dhis/containers.json| jq -r .apm)
+PROXY=$(cat /usr/local/etc/dhis/containers.json| jq -r .proxy)
+PROXY_IP=$(cat /usr/local/etc/dhis/containers.json| jq -r '.containers[] | select(.name=="proxy") | .ip')
 
 GUESTOS=20.04
 

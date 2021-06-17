@@ -31,6 +31,9 @@ for FILE in $(find etc/*); do
   fi
 done
 
+# copy containers.json to /usr/local/etc/dhis/
+cp configs/containers.json /usr/local/etc/dhis
+
 chown root:lxd /usr/local/etc/dhis/*
  
 echo "Done"

@@ -8,9 +8,9 @@
 #   Script to completely remove a dhis2 instance
 
 PROG=`basename $0`
-# Maybe source parse_config.sh
-APM=$(cat configs/containers.json| jq -r .apm)
-PROXY=$(cat configs/containers.json| jq -r .proxy)
+
+APM=$(cat /usr/local/etc/dhis/containers.json| jq -r .apm)
+PROXY=$(cat /usr/local/etc/dhis/containers.json| jq -r .proxy)
 
 ###############################################################
 usage() {

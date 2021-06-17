@@ -4,8 +4,7 @@
 
 PROG=`basename $0`
 
-# Maybe source parse_config.sh
-MUNIN_IP=$(cat configs/containers.json| jq -r '.containers[] | select(.name=="monitor") | .ip')
+MUNIN_IP=$(cat /usr/local/etc/dhis/containers.json| jq -r '.containers[] | select(.name=="monitor") | .ip')
 
 ###############################################################
 usage() {

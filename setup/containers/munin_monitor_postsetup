@@ -1,5 +1,5 @@
 # Maybe source parse_config.sh
-PROXY=$(cat configs/containers.json| jq -r .proxy)
+PROXY=$(cat /usr/local/etc/dhis/containers.json| jq -r .proxy)
 
 if [[ $PROXY == "nginx" ]];
 then
