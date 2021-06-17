@@ -1,8 +1,14 @@
-add-apt-repository ppa:certbot/certbot
-apt-get -y update
-apt-get -y upgrade
-apt-get -y install nginx libwww-perl
-apt-get -y install certbot
+# install nginx LTS
+apt-get install curl gnupg2 ca-certificates lsb-release -y
+echo "deb http://nginx.org/packages/ubuntu `lsb_release -cs` nginx" | sudo tee /etc/apt/sources.list.d/nginx.list
+curl -fsSL https://nginx.org/keys/nginx_signing.key | sudo apt-key add -
+apt-key fingerprint ABF5BD827BD9BF62
+apt-get update
+apt-get install -y nginx libwww-perl
+
+# install certbot
+snap install --classic certbot
+ln -s /snap/bin/certbot /usr/bin/certbot
 
 mkdir -p /etc/nginx/upstream
 

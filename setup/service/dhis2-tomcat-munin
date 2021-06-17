@@ -4,6 +4,8 @@
 
 PROG=`basename $0`
 
+MUNIN_IP=$(cat /usr/local/etc/dhis/containers.json| jq -r '.containers[] | select(.name=="monitor") | .ip')
+
 ###############################################################
 usage() {
   echo "Usage: $PROG <instance> <monitor container>"
@@ -41,8 +43,8 @@ MUNIN_CONF=/etc/munin/plugin-conf.d/munin-node
 
 # base munin-node install
 lxc exec $INSTANCE -- apt-get install -y munin-node libwww-perl libxml-simple-perl
-lxc exec $INSTANCE -- sed -i -e "\$acidr_allow 192.168.0.30/32\n" /etc/munin/munin-node.conf
-lxc exec $INSTANCE -- ufw allow proto tcp from 192.168.0.30 to any port 4949
+lxc exec $INSTANCE -- sed -i -e "\$acidr_allow $MUNIN_IP/32\n" /etc/munin/munin-node.conf
+lxc exec $INSTANCE -- ufw allow proto tcp from $MUNIN_IP to any port 4949
 
 # configure tomcat plugin
 lxc file push /usr/local/etc/dhis/tomcat-users.xml $INSTANCE/etc/tomcat9/tomcat-users.xml
@@ -67,6 +69,7 @@ lxc exec $INSTANCE -- ln -s /usr/share/munin/plugins/tomcat_volume /etc/munin/pl
 # Let monitor know about this node
 lxc exec $MONITOR -- sed -i -e "$ a \[$INSTANCE.lxd]\n  address $IP\n  use_node_name yes\n" /etc/munin/munin.conf
 
-sudo ufw allow proto tcp from 192.168.0.30 to any port 4949
+sudo ufw allow proto tcp from $MUNIN_IP to any port 4949
 lxc exec $INSTANCE -- service munin-node restart
 lxc exec $MONITOR -- /etc/init.d/munin restart
+

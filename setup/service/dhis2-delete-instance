@@ -9,6 +9,9 @@
 
 PROG=`basename $0`
 
+APM=$(cat /usr/local/etc/dhis/containers.json| jq -r .apm)
+PROXY=$(cat /usr/local/etc/dhis/containers.json| jq -r .proxy)
+
 ###############################################################
 usage() {
   echo "Usage: $PROG <name> [<postgres_container>]"
@@ -36,7 +39,27 @@ fi
 NAME=$1
 DBCONTAINER=${2:-postgres}
 
-lxc exec proxy -- rm /etc/apache2/upstream/${NAME}
+if [[ $PROXY == "nginx" ]];
+then
+  lxc exec proxy -- rm /etc/nginx/upstream/${NAME}.conf
+  if [[ $APM == "glowroot" ]]; 
+  then
+    lxc exec proxy -- rm /etc/nginx/upstream/${NAME}-glowroot.conf
+  fi
+  lxc exec proxy -- service nginx restart
+elif [[ $PROXY == "apache2" ]];
+then
+  lxc exec proxy -- rm /etc/apache2/upstream/${NAME}
+  if [[ $APM == "glowroot" ]]; 
+  then
+    lxc exec proxy -- rm /etc/apache2/upstream/${NAME}-glowroot
+  fi
+  lxc exec proxy -- service apache2 restart
+else
+  echo "Error: Proxy type not supported"
+  exit 1
+fi
+
 lxc stop $NAME
 lxc delete $NAME
 
@@ -44,3 +67,4 @@ lxc exec ${DBCONTAINER} -- dropdb $NAME
 lxc exec ${DBCONTAINER} -- dropuser $NAME
 
 sudo sed -i "/.* $N$/d" /etc/hosts
+
