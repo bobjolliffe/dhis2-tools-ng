@@ -147,7 +147,7 @@ done
 # Added PROXY_IP to tomcat_setup
 sed "s/PROXY_IP/${PROXY_IP}/" $TOMCAT_SETUP > /tmp/tomcat_setup
 cat /tmp/tomcat_setup | lxc exec $NAME -- bash
-#rm /tmp/tomcat_setup
+rm /tmp/tomcat_setup
 
 if [ $CREATEDB ]
 then	
