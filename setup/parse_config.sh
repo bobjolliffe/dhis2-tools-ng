@@ -1,5 +1,5 @@
 # Parse the contents of containers.json into bash variables
-CONFIG=$(cat configs/containers.json)
+CONFIG=$(cat /usr/local/etc/dhis/containers.json)
 
 # Abort script on errors
 #set -o errexit
@@ -22,8 +22,8 @@ fi
 
 # get configs for individual containers
 CONTAINERS=$(echo $CONFIG | jq -c .containers[])
-NAMES=$(cat configs/containers.json | jq -r .containers[].name)
-TYPES=$(cat configs/containers.json | jq -r .containers[].type)
+NAMES=$(echo $CONFIG | jq -r .containers[].name)
+TYPES=$(echo $CONFIG | jq -r .containers[].type)
 
 case $MONITORING in
      munin)
