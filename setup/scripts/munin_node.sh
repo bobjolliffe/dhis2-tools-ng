@@ -2,7 +2,7 @@
 
 # This will make whatever server it is run on a complete listening munin host
 MUNINCONF='/etc/munin/munin-node.conf'
-MONITOR=$(cat containers.json |jq -r '.containers[] | select(.name | contains("monitor"))' )
+MONITOR=$(cat /usr/local/etc/dhis/containers.json | jq -r '.containers[] | select(.name | contains("monitor"))' )
 
 if [ -z "$MONITOR" ]
 then
