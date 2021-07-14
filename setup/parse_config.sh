@@ -15,7 +15,7 @@ PROXY=$(echo $CONFIG | jq -r .proxy)
 PROXY_IP=$(echo $CONFIG | jq -r '.containers[] | select(.name=="proxy") | .ip')
 MUNIN_IP=$(echo $CONFIG | jq -r '.containers[] | select(.name=="monitor") | .ip')
 ENCDEVICE=$(echo $CONFIG | jq -r .encrypted_device)
-ENVIRONMENT=$(cat configs/containers.json |jq ".environment")
+ENVIRONMENT=$(echo $CONFIG |jq ".environment")
 if [[ ! $ENVIRONMENT == "null" ]]; then
   ENVVARS=$(echo $ENVIRONMENT | jq -c "to_entries[]")
 fi
@@ -49,4 +49,5 @@ for TYPE in $TYPES; do
 	  exit 1
   fi
 done 
+
 
