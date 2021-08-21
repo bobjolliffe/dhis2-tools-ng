@@ -1,18 +1,112 @@
 #setting nginx proxy
 lxc exec $NAME -- mkdir -p /etc/nginx/upstream
+lxc exec $NAME -- mkdir -p /etc/nginx/conf.d
 
 # Replace placeholder values in template conf
-cat configs/nginx-dhis2.conf |sed "s/FQDN/${FQDN}/" > /tmp/nginx-dhis2.conf
+cat configs/nginx-dhis2.conf |sed "s/FQDN/${FQDN}/" > /tmp/nginx.conf
 
-lxc file push /tmp/nginx-dhis2.conf $NAME/etc/nginx/sites-available/nginx-dhis2.conf
-lxc exec $NAME -- ln -s /etc/nginx/sites-available/nginx-dhis2.conf /etc/nginx/sites-enabled/nginx-dhis2.conf
-rm /tmp/nginx-dhis2.conf
+lxc file push /tmp/nginx.conf $NAME/etc/nginx/nginx.conf
+#lxc exec $NAME -- ln -s /etc/nginx/sites-available/nginx-dhis2.conf /etc/nginx/sites-enabled/nginx-dhis2.conf
+rm /tmp/nginx.conf
 
 echo "nginx setup running"
-echo "Install certbot certificates and then start nginx"
+
+####
+# performance.conf
+####
+cat <<EOF > /tmp/performance.conf
+sendfile              on;
+tcp_nopush            on;
+tcp_nodelay           on;
+keepalive_timeout     10;
+send_timeout 10;
+types_hash_max_size   2048;
+client_max_body_size  20M;
+client_body_timeout 10; 
+client_header_timeout 10;
+EOF
+
+####
+# gzip.conf
+####
+cat <<EOF > /tmp/gzip.conf
+gzip on;
+gzip_vary on;
+gzip_proxied any;
+gzip_comp_level 6;
+gzip_types text/plain text/css text/xml application/json application/javascript application/rss+xml application/atom+xml image/svg+xml;
+EOF
+
+####
+# ssl.conf
+####
+lxc exec $NAME -- mkdir -p /etc/nginx/ssl
+lxc exec $NAME -- openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
+lxc exec $NAME -- chmod 400 /etc/nginx/ssl/dhparam.pem
+
+cat <<EOF > /tmp/ssl.conf
+# Diffie-Hellman parameters
+ssl_dhparam /etc/nginx/ssl/dhparam.pem;
+
+# SSL settings
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_prefer_server_ciphers on;
+
+ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+  
+ssl_session_cache shared:SSL:20m;
+ssl_session_timeout 20m;
+ssl_session_tickets off;
+
+# SSL OCSP stapling
+ssl_stapling         on;
+ssl_stapling_verify  on;
+
+# DNS resolver configuration for OCSP response
+resolver          8.8.4.4 8.8.8.8 valid=300s ipv6=off;
+resolver_timeout  10s;
+EOF
+
+####
+# security.conf
+####
+cat <<EOF > /tmp/security.conf
+# Referrer Policy
+add_header Referrer-Policy "no-referrer";
+
+# Avoid clickjacking attack
+add_header X-Frame-Options "SAMEORIGIN" always;
+
+# Enable Strict Transport Security (HSTS) for https; 
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+	
+# Hide nginx server version
+server_tokens off;
+
+# Protect against MIME sniffing vulnerabilities
+add_header X-Content-Type-Options "nosniff" always;
+
+# X-XSS Protection
+add_header X-XSS-Protection "1; mode=block" always;
+EOF
+
+lxc file push /tmp/performance.conf $NAME/etc/nginx/conf.d/performance.conf
+rm /tmp/performance.conf
+lxc file push /tmp/gzip.conf $NAME/etc/nginx/conf.d/gzip.conf
+rm /tmp/gzip.conf
+lxc file push /tmp/ssl.conf $NAME/etc/nginx/conf.d/ssl.conf
+rm /tmp/ssl.conf
+lxc file push /tmp/security.conf $NAME/etc/nginx/conf.d/security.conf
+rm /tmp/security.conf
+
+# Remove nginx references
+lxc exec $NAME -- sed -i "s/nginx/webserver/g" /usr/share/nginx/html/index.html
+lxc exec $NAME -- sed -i "s/nginx/webserver/g" /usr/share/nginx/html/50x.html
+
 echo "Updating firewall"
 lxc exec $NAME -- ufw allow 80/tcp
 lxc exec $NAME -- ufw allow 443/tcp
 
-#lxc exec $NAME -- certbot certonly -d $FQDN --standalone -m $EMAIL --agree-tos -n --no-eff-email
-lxc exec $NAME -- service nginx restart
+lxc exec $NAME -- service nginx start
+
+

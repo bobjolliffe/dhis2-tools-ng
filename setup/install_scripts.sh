@@ -31,6 +31,15 @@ for FILE in $(find etc/*); do
   fi
 done
 
+# copy containers.json to /usr/local/etc/dhis/
+if [ -f configs/containers.json ];
+then
+  cp configs/containers.json /usr/local/etc/dhis
+else
+  echo "configs/containers.json configuration file does not exist. Create a configuration file to continue."
+  exit 1;
+fi
+
 chown root:lxd /usr/local/etc/dhis/*
  
 echo "Done"

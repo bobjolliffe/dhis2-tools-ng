@@ -15,5 +15,7 @@ cat configs/sysctl >> /etc/sysctl.conf
 sudo ufw allow in on lxdbr0
 sudo ufw allow out on lxdbr0
 
+source install_scripts.sh
+
 # Create the containers
 source create_containers.sh
