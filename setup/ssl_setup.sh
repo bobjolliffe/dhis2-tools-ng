@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/bin/bash
 
 # Parse json config file
 source parse_config.sh

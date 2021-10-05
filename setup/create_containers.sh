@@ -108,6 +108,7 @@ if [[ $MONITORING == munin ]]; then
   sudo service munin-node restart
 
   lxc exec monitor -- /etc/init.d/munin restart
+  lxc exec monitor -- service apache2 reload
 fi
 
 
