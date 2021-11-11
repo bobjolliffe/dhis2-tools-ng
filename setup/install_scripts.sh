@@ -31,6 +31,15 @@ for FILE in $(find etc/*); do
   fi
 done
 
+# copy glowroot-admin.json to /usr/local/etc/dhis/
+if [ -f configs/glowroot-admin.json ];
+then
+  cp configs/glowroot-admin.json /usr/local/etc/dhis
+else
+  echo "configs/glowroot-admin.json file does not exist."
+  exit 1;
+fi
+
 # copy containers.json to /usr/local/etc/dhis/
 if [ -f configs/containers.json ];
 then
