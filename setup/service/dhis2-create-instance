@@ -15,7 +15,7 @@ GLOWROOT_SETUP=/usr/local/etc/dhis/glowroot-admin.json
 APM=$(cat /usr/local/etc/dhis/containers.json| jq -r .apm)
 PROXY=$(cat /usr/local/etc/dhis/containers.json| jq -r .proxy)
 PROXY_IP=$(cat /usr/local/etc/dhis/containers.json| jq -r '.containers[] | select(.name=="proxy") | .ip')
-JAVA_VERSION="8"
+JAVA_VERSION="11"
 
 GUESTOS=20.04
 
