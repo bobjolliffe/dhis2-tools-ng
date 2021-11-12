@@ -10,10 +10,12 @@
 PROG=`basename $0`
 CREATEDB=true
 TOMCAT_SETUP=/usr/local/etc/dhis/tomcat_setup
+GLOWROOT_SETUP=/usr/local/etc/dhis/glowroot-admin.json
 
 APM=$(cat /usr/local/etc/dhis/containers.json| jq -r .apm)
 PROXY=$(cat /usr/local/etc/dhis/containers.json| jq -r .proxy)
 PROXY_IP=$(cat /usr/local/etc/dhis/containers.json| jq -r '.containers[] | select(.name=="proxy") | .ip')
+JAVA_VERSION="11"
 
 GUESTOS=20.04
 
@@ -26,14 +28,19 @@ usage() {
   echo "Options:"
   echo "  -h, --help       Display this help message"
   echo "  -n               Do NOT create database for instance"
+  echo "  -j <8|11>        Java version. Default is 8"
+  exit 1
 }
 
 # main entry point
 echo checking options
-while getopts p:nh opt
+while getopts p:nhj: opt
 do
   case $opt in
     n) CREATEDB=false ;;
+    j) JAVA_VERSION="${OPTARG}"
+       [[ $JAVA_VERSION == "8" || $JAVA_VERSION == "11" ]] || usage
+       ;;
     h) usage;;
     *) echo "Error: Unknown parameter '$OPTARG'."
       exit 1;;
@@ -44,7 +51,6 @@ shift $(($OPTIND - 1))
 
 if [ "$#" -lt 1 ]; then
   usage
-  exit 1
 fi
 
 NAME=$1
@@ -145,6 +151,7 @@ done
 
 # Added PROXY_IP to tomcat_setup
 sed "s/PROXY_IP/${PROXY_IP}/" $TOMCAT_SETUP > /tmp/tomcat_setup
+sed -i "s/JAVA_VERSION/${JAVA_VERSION}/" /tmp/tomcat_setup
 cat /tmp/tomcat_setup | lxc exec $NAME -- bash
 rm /tmp/tomcat_setup
 
@@ -161,7 +168,7 @@ then
   lxc file push /tmp/tomcat9 $NAME/etc/default/tomcat9
   lxc exec $NAME -- wget -P /opt https://github.com/glowroot/glowroot/releases/download/v0.13.6/glowroot-0.13.6-dist.zip 
   lxc exec $NAME -- unzip -o /opt/glowroot-0.13.6-dist.zip -d /opt
-  sed "s/XXXX/${NAME}/" configs/glowroot-admin.json > /tmp/glowroot-admin.json
+  sed "s/XXXX/${NAME}/" $GLOWROOT_SETUP > /tmp/glowroot-admin.json
   lxc file push /tmp/glowroot-admin.json $NAME/opt/glowroot/admin.json
   lxc exec $NAME -- chown -R tomcat.tomcat /opt/
   lxc exec $NAME ufw allow proto tcp from $PROXY_IP to any port 4000
@@ -282,5 +289,4 @@ else
   echo "Error: Proxy type not supported"
   exit 1
 fi
-
 
