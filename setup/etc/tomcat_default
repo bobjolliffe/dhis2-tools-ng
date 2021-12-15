@@ -5,6 +5,9 @@ JAVA_OPTS="-Djava.awt.headless=true"
 # For production instances, set minimum size the same as maximum
 # JAVA_OPTS="${JAVA_OPTS} -Xmx16G -Xms16G"
 
+# Mitigating log4j vulnerability
+JAVA_OPTS="${JAVA_OPTS} -Dlog4j2.formatMsgNoLookups=true"
+
 # Important to give the jvm a reliable, non-blocking, source of
 # randomness.  See eg https://stackoverflow.com/questions/58991966/what-java-security-egd-option-is-for
 JAVA_OPTS="${JAVA_OPTS} -Djava.security.egd=file:/dev/./urandom"
