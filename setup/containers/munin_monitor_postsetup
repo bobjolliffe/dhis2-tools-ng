@@ -1,5 +1,12 @@
 source parse_config.sh
 
+#Set Credentials for Munin
+dhis2-setCredential munin admin
+		  
+MUNIN_PASSWD=$(cat ${CREDENTIALS_FILE} | jq -r '.credentials[] | select(.name=="munin") | .password')
+MUNIN_USERNAME==$(cat ${CREDENTIALS_FILE} | jq -r '.credentials[] | select(.name=="munin") | .username')
+htpasswd -b -c /tmp/.htpasswd ${MUNIN_USERNAME} ${MUNIN_PASSWD}
+
 if [[ $PROXY == "nginx" ]];
 then
 #if proxy is nginx ;
@@ -7,6 +14,8 @@ then
     # Proxy pass to servlet container
 
     location /munin {
+	  auth_basic            "Basic Auth";
+      auth_basic_user_file  "/etc/nginx/.htpasswd";
       proxy_pass                http://${MUNIN_IP}/munin;
       proxy_redirect            off;
       proxy_set_header Host \$host;
@@ -30,7 +39,8 @@ then
    }
 EOF
   lxc file push /tmp/munin.conf proxy/etc/nginx/upstream/munin.conf
-  rm /tmp/munin.conf
+  lxc file push /tmp/.htpasswd proxy/etc/nginx/.htpasswd
+  rm /tmp/munin.conf /tmp/.htpasswd
 
   lxc exec proxy -- service nginx reload
 elif [[ $PROXY == "apache2" ]];
@@ -38,12 +48,17 @@ then
 #if proxy is apache2 ;
   cat <<EOF > /tmp/munin
   <Location /munin>
-    Require all granted
+    AuthType Basic
+    AuthName "Restricted Content"
+    AuthUserFile /etc/apache2/.htpasswd
+    Require ${MUNIN_USERNAME}
     ProxyPass "http://${MUNIN_IP}/munin"
     ProxyPassReverse "http://${MUNIN_IP}/munin"
   </LOcation>
 EOF
   lxc file push /tmp/munin proxy/etc/apache2/upstream/munin
+  lxc file push /tmp/.htpasswd proxy/etc/apache2/.htpasswd
+  rm /tmp/munin /tmp/.htpasswd
   lxc exec proxy -- service apache2 reload
 else
   echo "Error: Proxy type not supported"

@@ -11,6 +11,7 @@ PROG=`basename $0`
 CREATEDB=true
 TOMCAT_SETUP=/usr/local/etc/dhis/tomcat_setup
 GLOWROOT_SETUP=/usr/local/etc/dhis/glowroot-admin.json
+CREDENTIALS_FILE=/usr/local/etc/dhis/.credentials.json
 
 APM=$(cat /usr/local/etc/dhis/containers.json| jq -r .apm)
 PROXY=$(cat /usr/local/etc/dhis/containers.json| jq -r .proxy)
@@ -164,11 +165,16 @@ fi
 
 if [[ $APM == "glowroot" ]]; 
 then
+  #Set credentials for glowroot
+  dhis2-setCredential ${NAME}-glowroot admin
+  GLOWROOT_PASSWD=$(cat ${CREDENTIALS_FILE} | jq -r --arg name $NAME-glowroot '.credentials[] | select(.name==$name) | .password')
+  GLOWROOT_USERNAME==$(cat ${CREDENTIALS_FILE} | jq -r --arg name $NAME-glowroot '.credentials[] | select(.name==$name) | .username')
   sed -r '/glowroot.jar/ s/..(.*)/\1/' /usr/local/etc/dhis/tomcat_default > /tmp/tomcat9
   lxc file push /tmp/tomcat9 $NAME/etc/default/tomcat9
   lxc exec $NAME -- wget -P /opt https://github.com/glowroot/glowroot/releases/download/v0.13.6/glowroot-0.13.6-dist.zip 
   lxc exec $NAME -- unzip -o /opt/glowroot-0.13.6-dist.zip -d /opt
   sed "s/XXXX/${NAME}/" $GLOWROOT_SETUP > /tmp/glowroot-admin.json
+  sed -i "s/PASSWORD/${GLOWROOT_PASSWD}/" /tmp/glowroot-admin.json
   lxc file push /tmp/glowroot-admin.json $NAME/opt/glowroot/admin.json
   lxc exec $NAME -- chown -R tomcat.tomcat /opt/
   lxc exec $NAME ufw allow proto tcp from $PROXY_IP to any port 4000

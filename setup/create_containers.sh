@@ -26,7 +26,7 @@ fi
 ufw allow in on lxdbr0
 sudo ufw allow out on lxdbr0
 
-apt-get -y install unzip auditd jq
+apt-get -y install unzip auditd jq apache2-utils
 
 # Parse json config file
 source parse_config.sh

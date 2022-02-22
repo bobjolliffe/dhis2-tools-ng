@@ -1,7 +1,8 @@
 {
   "users": [
     {
-      "username": "anonymous",
+      "username": "admin",
+      "password": "PASSWORD",
       "roles": [
         "Administrator"
       ]

@@ -16,6 +16,8 @@ PROXY_IP=$(echo $CONFIG | jq -r '.containers[] | select(.name=="proxy") | .ip')
 MUNIN_IP=$(echo $CONFIG | jq -r '.containers[] | select(.name=="monitor") | .ip')
 ENCDEVICE=$(echo $CONFIG | jq -r .encrypted_device)
 ENVIRONMENT=$(echo $CONFIG |jq ".environment")
+CREDENTIALS_FILE="/usr/local/etc/dhis/.credentials.json"
+
 if [[ ! $ENVIRONMENT == "null" ]]; then
   ENVVARS=$(echo $ENVIRONMENT | jq -c "to_entries[]")
 fi

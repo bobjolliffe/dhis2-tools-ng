@@ -11,6 +11,7 @@ PROG=`basename $0`
 
 APM=$(cat /usr/local/etc/dhis/containers.json| jq -r .apm)
 PROXY=$(cat /usr/local/etc/dhis/containers.json| jq -r .proxy)
+CREDENTIALS_FILE="/usr/local/etc/dhis/.credentials.json"
 
 ###############################################################
 usage() {
@@ -65,6 +66,9 @@ lxc delete $NAME
 
 lxc exec ${DBCONTAINER} -- dropdb $NAME
 lxc exec ${DBCONTAINER} -- dropuser $NAME
+
+#Remove glowroot credentials
+jq --arg name $NAME-glowroot 'del(.credentials[] | select(.name == $name))' ${CREDENTIALS_FILE} > ${CREDENTIALS_FILE}.tmp && mv ${CREDENTIALS_FILE}.tmp ${CREDENTIALS_FILE}
 
 sudo sed -i "/.* $N$/d" /etc/hosts
 
