@@ -1,11 +1,18 @@
 source parse_config.sh
 
-#Set Credentials for Munin
-dhis2-setCredential munin admin
+if [[ $(cat ${CREDENTIALS_FILE} | jq -r '.credentials[] | select(.name=="munin")') == "" ]];
+then
+  #Set Credentials for Munin if does not exist
+  dhis2-setCredential munin admin
 		  
-MUNIN_PASSWD=$(cat ${CREDENTIALS_FILE} | jq -r '.credentials[] | select(.name=="munin") | .password')
-MUNIN_USERNAME==$(cat ${CREDENTIALS_FILE} | jq -r '.credentials[] | select(.name=="munin") | .username')
-htpasswd -b -c /tmp/.htpasswd ${MUNIN_USERNAME} ${MUNIN_PASSWD}
+  MUNIN_PASSWD=$(cat ${CREDENTIALS_FILE} | jq -r '.credentials[] | select(.name=="munin") | .password')
+  MUNIN_USERNAME=$(cat ${CREDENTIALS_FILE} | jq -r '.credentials[] | select(.name=="munin") | .username')
+  htpasswd -b -c /tmp/.htpasswd ${MUNIN_USERNAME} ${MUNIN_PASSWD}
+  lxc file push /tmp/.htpasswd monitor/etc/munin/.htpasswd
+  lxc exec monitor -- chmod 644 /etc/munin/.htpasswd
+  lxc exec monitor -- service apache2 restart
+  rm /tmp/.htpasswd
+fi
 
 if [[ $PROXY == "nginx" ]];
 then
@@ -14,8 +21,6 @@ then
     # Proxy pass to servlet container
 
     location /munin {
-	  auth_basic            "Basic Auth";
-      auth_basic_user_file  "/etc/nginx/.htpasswd";
       proxy_pass                http://${MUNIN_IP}/munin;
       proxy_redirect            off;
       proxy_set_header Host \$host;
@@ -39,8 +44,7 @@ then
    }
 EOF
   lxc file push /tmp/munin.conf proxy/etc/nginx/upstream/munin.conf
-  lxc file push /tmp/.htpasswd proxy/etc/nginx/.htpasswd
-  rm /tmp/munin.conf /tmp/.htpasswd
+  rm /tmp/munin.conf 
 
   lxc exec proxy -- service nginx reload
 elif [[ $PROXY == "apache2" ]];
@@ -48,20 +52,16 @@ then
 #if proxy is apache2 ;
   cat <<EOF > /tmp/munin
   <Location /munin>
-    AuthType Basic
-    AuthName "Restricted Content"
-    AuthUserFile /etc/apache2/.htpasswd
-    Require ${MUNIN_USERNAME}
     ProxyPass "http://${MUNIN_IP}/munin"
     ProxyPassReverse "http://${MUNIN_IP}/munin"
   </LOcation>
 EOF
   lxc file push /tmp/munin proxy/etc/apache2/upstream/munin
-  lxc file push /tmp/.htpasswd proxy/etc/apache2/.htpasswd
-  rm /tmp/munin /tmp/.htpasswd
+  rm /tmp/munin
   lxc exec proxy -- service apache2 reload
 else
   echo "Error: Proxy type not supported"
   exit 1
 fi
+
 

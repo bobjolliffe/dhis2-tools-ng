@@ -34,7 +34,8 @@ fi
    sed -i '/tmpldir/s/^#//' $MUNINCONF
 
    # Fix up Apache2
-   perl -pi -e "s|Require local|Require all granted|sig" $MUNINA2CONF
+   #perl -pi -e "s|Require local|Require all granted|sig" $MUNINA2CONF
+   perl -pi -e "s|Require local|AuthUserFile /etc/munin/.htpasswd\n    Authtype Basic\n    AuthName \"Munin\"\n    Require valid-user\n    Options FollowSymLinks SymLinksIfOwnerMatch|sig" $MUNINA2CONF
    ln -s $MUNINA2CONF /etc/apache2/conf-available/munin.conf  > /dev/null 2>&1
    a2enconf munin.conf
 

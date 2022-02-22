@@ -2,7 +2,7 @@
   "users": [
     {
       "username": "admin",
-      "password": "PASSWORD",
+      "passwordHash": "PASSWORD",
       "roles": [
         "Administrator"
       ]

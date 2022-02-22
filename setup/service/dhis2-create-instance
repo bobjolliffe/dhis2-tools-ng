@@ -173,14 +173,18 @@ then
   lxc file push /tmp/tomcat9 $NAME/etc/default/tomcat9
   lxc exec $NAME -- wget -P /opt https://github.com/glowroot/glowroot/releases/download/v0.13.6/glowroot-0.13.6-dist.zip 
   lxc exec $NAME -- unzip -o /opt/glowroot-0.13.6-dist.zip -d /opt
-  sed "s/XXXX/${NAME}/" $GLOWROOT_SETUP > /tmp/glowroot-admin.json
-  sed -i "s/PASSWORD/${GLOWROOT_PASSWD}/" /tmp/glowroot-admin.json
+  #Encrypt glowroot password
+  wget -P /tmp https://github.com/glowroot/glowroot/releases/download/v0.13.6/glowroot-central-0.13.6-dist.zip
+  unzip -o /tmp/glowroot-central-0.13.6-dist.zip -d /tmp
+  GLOWROOT_PASSWD_ENC=$(java -jar /tmp/glowroot-central/glowroot-central.jar hash-password $GLOWROOT_PASSWD)
+  jq --arg context /${NAME}-glowroot '.web.contextPath=$context' $GLOWROOT_SETUP > /tmp/glowroot-admin.json.tmp
+  jq --arg passwordHash $GLOWROOT_PASSWD_ENC '.users[].passwordHash=$passwordHash' /tmp/glowroot-admin.json.tmp > /tmp/glowroot-admin.json
   lxc file push /tmp/glowroot-admin.json $NAME/opt/glowroot/admin.json
   lxc exec $NAME -- chown -R tomcat.tomcat /opt/
   lxc exec $NAME ufw allow proto tcp from $PROXY_IP to any port 4000
 
   rm /tmp/tomcat9
-  rm /tmp/glowroot-admin.json
+  rm -rf /tmp/glowroot*
 else
   lxc file push /usr/local/etc/dhis/tomcat_default $NAME/etc/default/tomcat9
 fi
