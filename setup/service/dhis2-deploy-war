@@ -21,7 +21,7 @@ usage() {
   echo "  -h, --help       Display this help message"
 }
 
-while getopts :l:fh opt;
+while getopts :l:f:h opt;
 do
   case $opt in
     f)
