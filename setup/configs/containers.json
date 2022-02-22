@@ -1,0 +1,29 @@
+{
+  "fqdn":"dhis2tools.solidlines.io",
+  "email": "daniel.castelao@solidlines.io",
+  "environment": {
+          "TZ": "Africa/Accra"
+  },
+  "network": "192.168.0.1/24", 
+  "monitoring": "munin",
+  "apm": "glowroot",
+  "proxy": "nginx",
+  "containers": [
+    {
+      "name": "proxy",
+      "ip": "192.168.0.2",
+      "type": "nginx_proxy"
+    },
+    {
+      "name": "postgres",
+      "ip": "192.168.0.20",
+      "type": "postgres"
+    },
+    { 
+      "name": "monitor",
+      "ip": "192.168.0.30",
+      "type": "munin_monitor"
+    }
+  ]
+}
+
