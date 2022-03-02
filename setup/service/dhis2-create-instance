@@ -10,8 +10,6 @@
 PROG=`basename $0`
 CREATEDB=true
 TOMCAT_SETUP=/usr/local/etc/dhis/tomcat_setup
-GLOWROOT_SETUP=/usr/local/etc/dhis/glowroot-admin.json
-CREDENTIALS_FILE=/usr/local/etc/dhis/.credentials.json
 
 APM=$(cat /usr/local/etc/dhis/containers.json| jq -r .apm)
 PROXY=$(cat /usr/local/etc/dhis/containers.json| jq -r .proxy)
@@ -165,26 +163,18 @@ fi
 
 if [[ $APM == "glowroot" ]]; 
 then
-  #Set credentials for glowroot
-  dhis2-setCredential ${NAME}-glowroot admin
-  GLOWROOT_PASSWD=$(cat ${CREDENTIALS_FILE} | jq -r --arg name $NAME-glowroot '.credentials[] | select(.name==$name) | .password')
-  GLOWROOT_USERNAME==$(cat ${CREDENTIALS_FILE} | jq -r --arg name $NAME-glowroot '.credentials[] | select(.name==$name) | .username')
   sed -r '/glowroot.jar/ s/..(.*)/\1/' /usr/local/etc/dhis/tomcat_default > /tmp/tomcat9
   lxc file push /tmp/tomcat9 $NAME/etc/default/tomcat9
   lxc exec $NAME -- wget -P /opt https://github.com/glowroot/glowroot/releases/download/v0.13.6/glowroot-0.13.6-dist.zip 
   lxc exec $NAME -- unzip -o /opt/glowroot-0.13.6-dist.zip -d /opt
-  #Encrypt glowroot password
-  wget -P /tmp https://github.com/glowroot/glowroot/releases/download/v0.13.6/glowroot-central-0.13.6-dist.zip
-  unzip -o /tmp/glowroot-central-0.13.6-dist.zip -d /tmp
-  GLOWROOT_PASSWD_ENC=$(java -jar /tmp/glowroot-central/glowroot-central.jar hash-password $GLOWROOT_PASSWD)
-  jq --arg context /${NAME}-glowroot '.web.contextPath=$context' $GLOWROOT_SETUP > /tmp/glowroot-admin.json.tmp
-  jq --arg passwordHash $GLOWROOT_PASSWD_ENC '.users[].passwordHash=$passwordHash' /tmp/glowroot-admin.json.tmp > /tmp/glowroot-admin.json
-  lxc file push /tmp/glowroot-admin.json $NAME/opt/glowroot/admin.json
   lxc exec $NAME -- chown -R tomcat.tomcat /opt/
+  
+  #Set credentials for glowroot
+  dhis2-set-credential ${NAME}
+  
   lxc exec $NAME ufw allow proto tcp from $PROXY_IP to any port 4000
 
   rm /tmp/tomcat9
-  rm -rf /tmp/glowroot*
 else
   lxc file push /usr/local/etc/dhis/tomcat_default $NAME/etc/default/tomcat9
 fi

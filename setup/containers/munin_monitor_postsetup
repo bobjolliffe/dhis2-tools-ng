@@ -1,17 +1,9 @@
 source parse_config.sh
 
-if [[ $(cat ${CREDENTIALS_FILE} | jq -r '.credentials[] | select(.name=="munin")') == "" ]];
+# Check if monitor container already exists
+if [[ ! $(lxc list -c n -f csv | grep 'monitor') ]];
 then
-  #Set Credentials for Munin if does not exist
-  dhis2-setCredential munin admin
-		  
-  MUNIN_PASSWD=$(cat ${CREDENTIALS_FILE} | jq -r '.credentials[] | select(.name=="munin") | .password')
-  MUNIN_USERNAME=$(cat ${CREDENTIALS_FILE} | jq -r '.credentials[] | select(.name=="munin") | .username')
-  htpasswd -b -c /tmp/.htpasswd ${MUNIN_USERNAME} ${MUNIN_PASSWD}
-  lxc file push /tmp/.htpasswd monitor/etc/munin/.htpasswd
-  lxc exec monitor -- chmod 644 /etc/munin/.htpasswd
-  lxc exec monitor -- service apache2 restart
-  rm /tmp/.htpasswd
+  dhis2-set-credential monitor
 fi
 
 if [[ $PROXY == "nginx" ]];
