@@ -11,7 +11,6 @@ Do you want to add the password manually for the user admin in the service <SERV
 1) Yes
 2) No
 ```
-
 Password will be shown to the user
 ```
 Credentials have been set
@@ -28,11 +27,16 @@ usage: dhis2-set-credential <SERVICE>
   Valid services are: <available services will be shown>
 ```
 
+For example, to change the Glowroot APM admin password for the *hmis* DHIS2 instance, the user has to run the command
+```
+sudo dhis2-set-credential hmis
+```
+
 The user will be prompted to type in the desired password and otherwise it will be randomly generated and password will be shown to the user.
 ```
-SET <SERVICE> CREDENTIALS
+SET hmis CREDENTIALS
 ====================
-Do you want to add the password manually for the user admin in the service <SERVICE>? (If not, password will be generated randomly)
+Do you want to add the password manually for the user admin in the service hmis? (If not, password will be generated randomly)
 1) Yes
 2) No
 ```
