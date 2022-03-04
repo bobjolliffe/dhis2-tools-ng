@@ -37,6 +37,7 @@ fi
    #perl -pi -e "s|Require local|Require all granted|sig" $MUNINA2CONF
    perl -pi -e "s|Require local|AuthUserFile /etc/munin/.htpasswd\n    Authtype Basic\n    AuthName \"Munin\"\n    Require valid-user\n    Options FollowSymLinks SymLinksIfOwnerMatch|sig" $MUNINA2CONF
    ln -s $MUNINA2CONF /etc/apache2/conf-available/munin.conf  > /dev/null 2>&1
+   touch /etc/munin/.htpasswd
    a2enconf munin.conf
 
    #Also add hosts as required to the config file

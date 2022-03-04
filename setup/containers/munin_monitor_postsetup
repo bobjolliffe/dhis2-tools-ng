@@ -1,9 +1,13 @@
 source parse_config.sh
 
 # Check if monitor container already exists
-if [[ ! $(lxc list -c n -f csv | grep 'monitor') ]];
+lxc file pull monitor/etc/munin/.htpasswd /tmp/.htpasswd
+CHECK_HTPASSWD=$(cat /tmp/.htpasswd)
+if [[ $CHECK_HTPASSWD == "" ]];
 then
   dhis2-set-credential monitor
+else
+  rm /tmp/.htpasswd
 fi
 
 if [[ $PROXY == "nginx" ]];
@@ -46,7 +50,7 @@ then
   <Location /munin>
     ProxyPass "http://${MUNIN_IP}/munin"
     ProxyPassReverse "http://${MUNIN_IP}/munin"
-  </LOcation>
+  </Location>
 EOF
   lxc file push /tmp/munin proxy/etc/apache2/upstream/munin
   rm /tmp/munin

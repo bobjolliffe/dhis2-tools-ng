@@ -1,8 +1,8 @@
-#dhis2-set-credential
+# dhis2-set-credential
 Security of the servers and services is a priority. We need to set username and password credentials for the munin monitoring service and the Glowroot APM tool on each instance we have created to prevent unwanted users from accessing sensitive or critical data.
 Credentials will be set once we install the monitor container or a DHIS2 instance with Glowroot APM or can be reset by the user later.
 
-##Automatic execution
+## Automatic execution
 The dhis2-set-credential service will run once the monitor container is installed or when a DHIS2 instance with Glowroot APM is created. The user will be prompted to type in the desired password and otherwise it will be randomly generated.
 ```
 SET <SERVICE> CREDENTIALS
@@ -21,7 +21,7 @@ Username: admin
 Password: XXXXX
 ```
 
-##Manual execution
+## Manual execution
 The user will be able to reset the password of a service by running the service script dhis2-set-credentials.
 ```
 usage: dhis2-set-credential <SERVICE>
