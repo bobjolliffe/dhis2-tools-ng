@@ -17,7 +17,7 @@ if [[ $UFW_STATUS == "inactive" ]]; then
 	echo "It is required to NAT connections to the proxy container."
 	echo "You just need to have a rule to allow ssh access. eg:"
 	echo "   sudo ufw limit 22/tcp"
-	echo "then, 'sudo enable ufw'"
+	echo "then, 'sudo ufw enable'"
 	echo "Then you can try to run ./create_containers again"
 	exit 1
 fi
