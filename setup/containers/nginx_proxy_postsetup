@@ -15,14 +15,16 @@ echo "nginx setup running"
 # performance.conf
 ####
 cat <<EOF > /tmp/performance.conf
+server_tokens         off;
+large_client_header_buffers 2 1k;
 sendfile              on;
 tcp_nopush            on;
 tcp_nodelay           on;
 keepalive_timeout     10;
-send_timeout 10;
+send_timeout          10;
 types_hash_max_size   2048;
 client_max_body_size  20M;
-client_body_timeout 10; 
+client_body_timeout   10; 
 client_header_timeout 10;
 EOF
 
@@ -67,37 +69,12 @@ resolver          8.8.4.4 8.8.8.8 valid=300s ipv6=off;
 resolver_timeout  10s;
 EOF
 
-####
-# security.conf
-####
-cat <<EOF > /tmp/security.conf
-# Referrer Policy
-add_header Referrer-Policy "no-referrer";
-
-# Avoid clickjacking attack
-add_header X-Frame-Options "SAMEORIGIN" always;
-
-# Enable Strict Transport Security (HSTS) for https; 
-add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
-	
-# Hide nginx server version
-server_tokens off;
-
-# Protect against MIME sniffing vulnerabilities
-add_header X-Content-Type-Options "nosniff" always;
-
-# X-XSS Protection
-add_header X-XSS-Protection "1; mode=block" always;
-EOF
-
 lxc file push /tmp/performance.conf $NAME/etc/nginx/conf.d/performance.conf
 rm /tmp/performance.conf
 lxc file push /tmp/gzip.conf $NAME/etc/nginx/conf.d/gzip.conf
 rm /tmp/gzip.conf
 lxc file push /tmp/ssl.conf $NAME/etc/nginx/conf.d/ssl.conf
 rm /tmp/ssl.conf
-lxc file push /tmp/security.conf $NAME/etc/nginx/conf.d/security.conf
-rm /tmp/security.conf
 
 # Remove nginx references
 lxc exec $NAME -- sed -i "s/nginx/webserver/g" /usr/share/nginx/html/index.html

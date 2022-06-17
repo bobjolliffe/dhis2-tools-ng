@@ -204,12 +204,18 @@ then
       proxy_set_header X-Real-IP \$remote_addr;
       proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
       proxy_set_header X-Forwarded-Proto  \$scheme;
-	  proxy_hide_header X-Frame-Options;
-      proxy_hide_header Strict-Transport-Security;
-      proxy_hide_header X-Content-Type-Options;
-      proxy_hide_header X-XSS-protection;
-	  proxy_hide_header X-Powered-By;
-	  proxy_hide_header Server;
+
+      # Enable Strict Transport Security (HSTS) for https
+      proxy_set_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";
+      # To mitigate the risk of clickjacking attacks
+      proxy_set_header X-Frame-Options "SAMEORIGIN";
+      # To prevent drive-by download attacks where a user agent is sniffing content types in responses
+      proxy_set_header X-Content-Type-Options "nosniff";
+      # To leverage browser-based protections against cross-site scripting
+      proxy_set_header X-Xss-Protection "1; mode=block";
+
+      proxy_hide_header X-Powered-By;
+      proxy_hide_header Server;
 
       proxy_connect_timeout  480s;
       proxy_read_timeout     480s;
@@ -236,12 +242,18 @@ EOF
       proxy_set_header X-Real-IP \$remote_addr;
       proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
       proxy_set_header X-Forwarded-Proto  \$scheme;
-	  proxy_hide_header X-Frame-Options;
-      proxy_hide_header Strict-Transport-Security;
-      proxy_hide_header X-Content-Type-Options;
-      proxy_hide_header X-XSS-protection;
-	  proxy_hide_header X-Powered-By;
-	  proxy_hide_header Server;
+      
+      # Enable Strict Transport Security (HSTS) for https
+      proxy_set_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";  
+      # To mitigate the risk of clickjacking attacks
+      proxy_set_header X-Frame-Options "SAMEORIGIN";
+      # To prevent drive-by download attacks where a user agent is sniffing content types in responses
+      proxy_set_header X-Content-Type-Options "nosniff";
+      # To leverage browser-based protections against cross-site scripting
+      proxy_set_header X-Xss-Protection "1; mode=block";
+
+      proxy_hide_header X-Powered-By;
+      proxy_hide_header Server;
 
       proxy_connect_timeout  480s;
       proxy_read_timeout     480s;
