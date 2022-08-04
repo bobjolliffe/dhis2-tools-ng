@@ -17,16 +17,16 @@ if [[ $UFW_STATUS == "inactive" ]]; then
 	echo "It is required to NAT connections to the proxy container."
 	echo "You just need to have a rule to allow ssh access. eg:"
 	echo "   sudo ufw limit 22/tcp"
-	echo "then, 'sudo enable ufw'"
+	echo "then, 'sudo ufw enable'"
 	echo "Then you can try to run ./create_containers again"
 	exit 1
 fi
 
 # Make sure ufw is not blocking the lxd traffic
-ufw allow in on lxdbr0
+sudo ufw allow in on lxdbr0
 sudo ufw allow out on lxdbr0
 
-apt-get -y install unzip auditd jq apache2-utils
+sudo apt-get -y install unzip auditd jq apache2-utils
 
 # Parse json config file
 source parse_config.sh
