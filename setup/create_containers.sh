@@ -23,10 +23,10 @@ if [[ $UFW_STATUS == "inactive" ]]; then
 fi
 
 # Make sure ufw is not blocking the lxd traffic
-ufw allow in on lxdbr0
+sudo ufw allow in on lxdbr0
 sudo ufw allow out on lxdbr0
 
-apt-get -y install unzip auditd jq apache2-utils
+sudo apt-get -y install unzip auditd jq apache2-utils
 
 # Parse json config file
 source parse_config.sh
