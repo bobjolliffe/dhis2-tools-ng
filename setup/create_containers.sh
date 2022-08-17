@@ -45,6 +45,12 @@ for CONTAINER in $CONTAINERS; do
   IP=$(echo $CONTAINER | jq -r .ip)
   TYPE=$(echo $CONTAINER | jq -r .type)
 
+  container_exist=$(lxc list -c n | grep $NAME)
+  if ! [ -z "$container_exist" ]; then
+    echo "Container $NAME already exist, skipping"
+    continue
+  fi
+
   echo "Creating $NAME of type $TYPE"
   lxc init ubuntu:$GUESTOS $NAME
   lxc network attach $LXDBR $NAME eth0 eth0
