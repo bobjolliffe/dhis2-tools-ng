@@ -1,2 +1,24 @@
 apt update
-apt upgrade
+apt upgrade -y
+
+apt install -y systemd-journal-remote
+
+sed -i -e 's/https/http/' /lib/systemd/system/systemd-journal-remote.service
+systemctl daemon-reload
+systemctl enable --now systemd-journal-remote.socket
+systemctl enable systemd-journal-remote.service
+
+
+# on the client
+# apt install -y systemd-journal-remote
+# set the URL to the rsyslog IP in /etc/systemd/journal-upload.conf as 'http://192.168.0.100:19532'
+# adduser --system --home /run/systemd --no-create-home --disabled-login --group systemd-journal-upload
+# chown systemd-journal-upload /var/lib/private/systemd/
+# sed -i -e 's/DynamicUser\=yes/DynamicUser\=no/' /lib/systemd/system/systemd-journal-upload.service
+# systemctl daemon-reload
+# sudo systemctl enable --now systemd-journal-upload.service
+
+
+# TODO: restrict only to active containers?
+ufw allow in 19532/tcp
+ufw enable
