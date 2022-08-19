@@ -6,7 +6,11 @@ apt install -y systemd-journal-remote
 sed -i -e 's/https/http/' /lib/systemd/system/systemd-journal-remote.service
 systemctl daemon-reload
 systemctl enable --now systemd-journal-remote.socket
+<<<<<<< HEAD
 systemctl enable --now systemd-journal-remote.service
+=======
+systemctl enable systemd-journal-remote.service
+>>>>>>> da7e828 (rsyslog configuration for centralized journald (#2))
 
 
 # on the client
