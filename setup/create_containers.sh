@@ -101,16 +101,21 @@ if [[ $MONITORING == munin ]]; then
     NAME=$(echo $CONTAINER | jq -r .name)
     IP=$(echo $CONTAINER | jq -r .ip)
     TYPE=$(echo $CONTAINER | jq -r .type)
-    echo "$NAME"
+
     if [[ $TYPE != munin_monitor ]]; then
-      echo "adding $NAME to monitor"
-      lxc exec monitor -- sed -i -e "\$a[$NAME.lxd]\n  address $IP\n  use_node_name yes\n" /etc/munin/munin.conf
+      monitored=$(lxc exec monitor -- grep "$NAME" /etc/munin/munin.conf)
+      if  [ -z "$monitored" ]; then
+        echo "adding $NAME to monitor"
+        lxc exec monitor -- sed -i -e "\$a[$NAME.lxd]\n  address $IP\n  use_node_name yes\n" /etc/munin/munin.conf
+      fi
     fi
   done
   # Also monitor the host
   sudo apt-get install munin-node -y
-  sudo echo "cidr_allow $MUNIN_IP/32" >> /etc/munin/munin-node.conf
-  sudo ufw allow proto tcp from $MUNIN_IP to any port 4949
+  if ! [ "$(grep "$MUNIN_IP" /etc/munin/munin-node.conf)" ]; then
+    sudo echo "cidr_allow $MUNIN_IP/32" >> /etc/munin/munin-node.conf
+    sudo ufw allow proto tcp from $MUNIN_IP to any port 4949
+  fi
   sudo service munin-node restart
 
   lxc exec monitor -- /etc/init.d/munin restart

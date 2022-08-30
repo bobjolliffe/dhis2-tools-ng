@@ -23,6 +23,11 @@
       "name": "monitor",
       "ip": "192.168.0.30",
       "type": "munin_monitor"
+    },
+    {
+      "name": "logger",
+      "ip": "192.168.0.100",
+      "type": "rsyslog_logger"
     }
   ]
 }
