@@ -1,0 +1,38 @@
+S3_STORAGE_CLASS="STANDARD_IA"
+CONTAINER_LOGS_DIR="/var/log/journal/remote"
+POOL_NAME="logs"
+VOLUME_NAME="logs"
+
+if [[ $LOGS_BACKEND == fs ]]; then
+
+  if ! [ -d "$LOGS_DIR" ]; then
+    echo "Directory $LOGS_DIR not a directory or not present on host. Quitting"
+    exit 1
+  fi
+
+  echo -n "Creating storage pool $POOL_NAME..."
+  storage_pool_exist=$(lxc storage list | grep $POOL_NAME)
+  if ! [ "$storage_pool_exist" ]; then
+    lxc storage create $POOL_NAME dir source=$LOGS_DIR
+    echo "created"
+  else
+    echo "already exist, skipping"
+  fi
+
+  echo -n "Creating storage volume $VOLUME_NAME..."
+  volume_exist=$(lxc storage volume list $POOL_NAME | grep $VOLUME_NAME)
+  if ! [ "$volume_exist" ]; then
+    lxc storage volume create $POOL_NAME $VOLUME_NAME
+    echo "created"
+  else
+    echo "already exist, skipping"
+  fi
+  
+  lxc storage volume attach $POOL_NAME $VOLUME_NAME $NAME $CONTAINER_LOGS_DIR
+
+  #lxc exec $NAME -- sed -e "s/journal\/remote/${CONTAINER_LOGS_DIR//\//\\/}/g" /lib/systemd/system/systemd-journal-remote.service
+elif [[ $LOGS_BACKEND == s3 ]]; then
+  lxc exec $NAME -- apt install awscli -y
+  # configure awscli with profile
+  lxc exec $NAME -- crontab -l ; echo "0 * * * * s3 cp --quiet --sse --storage-class ${S3_STORAGE_CLASS} ${CONTAINER_LOGS_DIR} s3://${LOGS_DIR}" | sort - | uniq - | crontab -
+fi

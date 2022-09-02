@@ -27,7 +27,9 @@
     {
       "name": "logger",
       "ip": "192.168.0.100",
-      "type": "rsyslog_logger"
+      "type": "rsyslog_logger",
+      "storage": "fs",
+      "directory": "/mnt/logs"
     }
   ]
 }
