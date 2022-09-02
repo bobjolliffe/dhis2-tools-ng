@@ -6,7 +6,7 @@ apt install -y systemd-journal-remote
 sed -i -e 's/https/http/' /lib/systemd/system/systemd-journal-remote.service
 systemctl daemon-reload
 systemctl enable --now systemd-journal-remote.socket
-systemctl enable systemd-journal-remote.service
+systemctl enable --now systemd-journal-remote.service
 
 
 # on the client
