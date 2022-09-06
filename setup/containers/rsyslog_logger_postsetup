@@ -27,8 +27,10 @@ if [[ $LOGS_BACKEND == fs ]]; then
   else
     echo "already exist, skipping"
   fi
-  
+
+  lxc exec $NAME -- service systemd-journal-remote stop
   lxc storage volume attach $POOL_NAME $VOLUME_NAME $NAME $CONTAINER_LOGS_DIR
+  lxc exec $NAME -- service systemd-journal-remote start
 
   #lxc exec $NAME -- sed -e "s/journal\/remote/${CONTAINER_LOGS_DIR//\//\\/}/g" /lib/systemd/system/systemd-journal-remote.service
 elif [[ $LOGS_BACKEND == s3 ]]; then
