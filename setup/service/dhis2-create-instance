@@ -120,6 +120,8 @@ then
   lxc exec $PG -- psql -c "ALTER user $NAME with PASSWORD '$PASSWD'" postgres 
   lxc exec $PG -- createdb -O $NAME $NAME
   lxc exec $PG -- psql -c "CREATE EXTENSION postgis" $NAME
+  lxc exec $PG -- psql -c "CREATE EXTENSION btree_gin" $NAME
+  lxc exec $PG -- psql -c "CREATE EXTENSION pg_trgm" $NAME
 
 
   # Fixing pg_hba.conf permissions
