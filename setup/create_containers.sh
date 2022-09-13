@@ -87,6 +87,11 @@ for CONTAINER in $CONTAINERS; do
 	lxc exec $NAME -- service munin-node restart
   fi
 
+  if [[ $TYPE == rsyslog_logger ]]; then
+    LOGS_DIR=$(echo $CONTAINER | jq -r .directory)
+    LOGS_BACKEND=$(echo $CONTAINER | jq -r .storage)
+  fi
+
   # source any post setup scripts
   if [[ -f containers/${TYPE}_postsetup ]]; 
   then
