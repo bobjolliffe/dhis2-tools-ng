@@ -45,7 +45,7 @@ for CONTAINER in $CONTAINERS; do
   IP=$(echo $CONTAINER | jq -r .ip)
   TYPE=$(echo $CONTAINER | jq -r .type)
 
-  container_exist=$(lxc list -c n | grep $NAME)
+  container_exist=$(lxc list -c n | grep -w $NAME)
   if ! [ -z "$container_exist" ]; then
     echo "Container $NAME already exist, skipping"
     continue
