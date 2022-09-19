@@ -304,3 +304,19 @@ else
   exit 1
 fi
 
+logger_present=$(cat /usr/local/etc/dhis/containers.json| jq -r '.containers[] | select(.type|test("logger"))')
+if [ "$logger_present" ]; then
+  echo "Configuring remote logging"
+  logger_ip=$(cat /usr/local/etc/dhis/containers.json| jq -r '.containers[] | select(.type|test("logger")) | .ip')
+
+  if [[ "$logger_present" == "journal_logger" ]]; then
+    lxc exec $NAME -- apt install -y systemd-journal-remote
+    lxc exec $NAME -- sh -c "echo URL=http://$logger_ip:19532 >> /etc/systemd/journal-upload.conf"
+    lxc exec $NAME -- adduser --system --home /run/systemd --no-create-home --disabled-login --group systemd-journal-upload
+    # lxc exec $NAME -- chown systemd-journal-upload /var/lib/private/systemd/
+    lxc exec $NAME -- sed -i -e 's/DynamicUser\=yes/DynamicUser\=no/' /lib/systemd/system/systemd-journal-upload.service
+    lxc exec $NAME -- systemctl daemon-reload
+    lxc exec $NAME-- systemctl enable systemd-journal-upload.service
+    lxc exec $NAME-- service systemd-journal-upload start
+  fi
+fi
