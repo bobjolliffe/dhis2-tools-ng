@@ -1,0 +1,13 @@
+apt update
+apt upgrade -y
+
+apt install -y systemd-journal-remote
+
+sed -i -e 's/https/http/' /lib/systemd/system/systemd-journal-remote.service
+systemctl daemon-reload
+systemctl enable --now systemd-journal-remote.socket
+systemctl enable --now systemd-journal-remote.service
+
+# TODO: restrict only to active containers?
+ufw allow in 19532/tcp
+ufw enable
