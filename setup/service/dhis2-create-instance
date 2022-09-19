@@ -75,7 +75,7 @@ then
 fi
 
 # Check IP is available
-if [[ $(lxc list -c 4 |grep $IPREGEX) ]];
+if [[ $(lxc list -c 4 |grep -w $IPREGEX) ]];
 then
   echo "$IP already in use"
   exit 1
