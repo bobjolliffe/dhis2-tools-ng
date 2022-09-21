@@ -1,5 +1,9 @@
+LOGS_DIR=$(echo $CONTAINER | jq -r .directory)
+LOGS_BACKEND=$(echo $CONTAINER | jq -r .storage)
+
 S3_STORAGE_CLASS="STANDARD_IA"
 CONTAINER_LOGS_DIR="/var/log/journal/remote"
+
 POOL_NAME="logs"
 VOLUME_NAME="logs"
 
