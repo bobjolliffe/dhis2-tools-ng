@@ -35,6 +35,16 @@ for CONTAINER in $CONTAINERS; do
       echo "postgres detected."
       lxc exec $container_name -- sh -c "echo \"log_destination = 'syslog'\" >> /etc/postgresql/13/main/postgresql.conf"
       lxc exec $container_name -- service postgresql restart
+    elif [[ "$container_type" == "munin_monitor" ]]; then
+      echo "munin detected."
+      lxc exec $container_name -- sed -i '/ErrorLog/s/.*/ErrorLog syslog/' /etc/apache2/sites-enabled/000-default.conf
+      lxc exec $container_name -- sed -i '/CustomLog/s/.*/CustomLog \"| \/usr\/bin\/logger -t munin -p user.info\" combined/' /etc/apache2/sites-enabled/000-default.conf
+      lxc exec $container_name -- service apache2 restart
+    fi
+
+    if [ "$(lxc exec $container_name -- dpkg -l | grep munin-node)" ]; then
+      lxc exec $container_name -- sed -i '/log_file/s/.*/log_file Sys::Syslog/' /etc/munin/munin-node.conf
+      lxc exec $container_name -- service munin-node restart
     fi
 
     lxc exec $container_name -- apt install -y systemd-journal-remote
