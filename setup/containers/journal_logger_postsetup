@@ -16,7 +16,19 @@ for CONTAINER in $CONTAINERS; do
       continue
     fi
 
-    echo "[INFO] Configuring remote logging for $container_name"
+    echo -n "[INFO] Configuring remote logging for $container_name.."
+    if [[ "$container_type" == "nginx_proxy" ]]; then
+      echo "nginx detected."
+      lxc exec $container_name -- sed -i '/error_log/s/.*/error_log syslog:server=unix:\/dev\/log info;/' /etc/nginx/nginx.conf
+      lxc exec $container_name -- sed -i '/http {/a  access_log   syslog:server=unix:\/dev\/log;' /etc/nginx/nginx.conf
+      lxc exec $container_name -- service nginx restart
+    elif [[ "$container_type" == "apache_proxy" ]]; then
+      echo "apache2 detected."
+      lxc exec $container_name -- sed -i '/ErrorLog/s/.*/ErrorLog syslog/' /etc/apache2/sites-enabled/000-default.conf
+      lxc exec $container_name -- sed -i '/CustomLog/s/.*/CustomLog \"| \/usr\/bin\/logger -t apache2 -p user.info\" combined/' /etc/apache2/sites-enabled/000-default.conf
+      lxc exec $container_name -- service apache2 restart
+    fi
+
     lxc exec $container_name -- apt install -y systemd-journal-remote
     lxc exec $container_name -- sh -c "echo URL=http://$IP:19532 >> /etc/systemd/journal-upload.conf"
     lxc exec $container_name -- adduser --system --home /run/systemd --no-create-home --disabled-login --group systemd-journal-upload
