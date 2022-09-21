@@ -56,7 +56,7 @@ if [[ $LOGS_BACKEND == fs ]]; then
   fi
 
   echo -n "Creating storage volume $VOLUME_NAME..."
-  volume_exist=$(lxc storage volume list $POOL_NAME | grep $VOLUME_NAME)
+  volume_exist=$(lxc storage volume list $POOL_NAME | grep -w $VOLUME_NAME)
   if ! [ "$volume_exist" ]; then
     lxc storage volume create $POOL_NAME $VOLUME_NAME
     echo "created"
