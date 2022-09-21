@@ -31,6 +31,10 @@ for CONTAINER in $CONTAINERS; do
       lxc exec $container_name -- sed -i '/ErrorLog/s/.*/ErrorLog syslog/' /etc/apache2/sites-enabled/000-default.conf
       lxc exec $container_name -- sed -i '/CustomLog/s/.*/CustomLog \"| \/usr\/bin\/logger -t apache2 -p user.info\" combined/' /etc/apache2/sites-enabled/000-default.conf
       lxc exec $container_name -- service apache2 restart
+    elif [[ "$container_type" == "postgres" ]]; then
+      echo "postgres detected."
+      lxc exec $container_name -- sh -c "echo \"log_destination = 'syslog'\" >> /etc/postgresql/13/main/postgresql.conf"
+      lxc exec $container_name -- service postgresql restart
     fi
 
     lxc exec $container_name -- apt install -y systemd-journal-remote
