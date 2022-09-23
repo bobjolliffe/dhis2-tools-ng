@@ -1,5 +1,9 @@
+LOGS_DIR=$(echo $CONTAINER | jq -r .directory)
+LOGS_BACKEND=$(echo $CONTAINER | jq -r .storage)
+
 S3_STORAGE_CLASS="STANDARD_IA"
 CONTAINER_LOGS_DIR="/var/log/journal/remote"
+
 POOL_NAME="logs"
 VOLUME_NAME="logs"
 
@@ -16,7 +20,33 @@ for CONTAINER in $CONTAINERS; do
       continue
     fi
 
-    echo "[INFO] Configuring remote logging for $container_name"
+    echo -n "[INFO] Configuring remote logging for $container_name.."
+    if [[ "$container_type" == "nginx_proxy" ]]; then
+      echo "nginx detected."
+      lxc exec $container_name -- sed -i '/error_log/s/.*/error_log syslog:server=unix:\/dev\/log info;/' /etc/nginx/nginx.conf
+      lxc exec $container_name -- sed -i '/http {/a  access_log   syslog:server=unix:\/dev\/log;' /etc/nginx/nginx.conf
+      lxc exec $container_name -- service nginx restart
+    elif [[ "$container_type" == "apache_proxy" ]]; then
+      echo "apache2 detected."
+      lxc exec $container_name -- sed -i '/ErrorLog/s/.*/ErrorLog syslog/' /etc/apache2/sites-enabled/000-default.conf
+      lxc exec $container_name -- sed -i '/CustomLog/s/.*/CustomLog \"| \/usr\/bin\/logger -t apache2 -p user.info\" combined/' /etc/apache2/sites-enabled/000-default.conf
+      lxc exec $container_name -- service apache2 restart
+    elif [[ "$container_type" == "postgres" ]]; then
+      echo "postgres detected."
+      lxc exec $container_name -- sh -c "echo \"log_destination = 'syslog'\" >> /etc/postgresql/13/main/postgresql.conf"
+      lxc exec $container_name -- service postgresql restart
+    elif [[ "$container_type" == "munin_monitor" ]]; then
+      echo "munin detected."
+      lxc exec $container_name -- sed -i '/ErrorLog/s/.*/ErrorLog syslog/' /etc/apache2/sites-enabled/000-default.conf
+      lxc exec $container_name -- sed -i '/CustomLog/s/.*/CustomLog \"| \/usr\/bin\/logger -t munin -p user.info\" combined/' /etc/apache2/sites-enabled/000-default.conf
+      lxc exec $container_name -- service apache2 restart
+    fi
+
+    if [ "$(lxc exec $container_name -- dpkg -l | grep munin-node)" ]; then
+      lxc exec $container_name -- sed -i '/log_file/s/.*/log_file Sys::Syslog/' /etc/munin/munin-node.conf
+      lxc exec $container_name -- service munin-node restart
+    fi
+
     lxc exec $container_name -- apt install -y systemd-journal-remote
     lxc exec $container_name -- sh -c "echo URL=http://$IP:19532 >> /etc/systemd/journal-upload.conf"
     lxc exec $container_name -- adduser --system --home /run/systemd --no-create-home --disabled-login --group systemd-journal-upload
@@ -44,7 +74,7 @@ if [[ $LOGS_BACKEND == fs ]]; then
   fi
 
   echo -n "Creating storage volume $VOLUME_NAME..."
-  volume_exist=$(lxc storage volume list $POOL_NAME | grep $VOLUME_NAME)
+  volume_exist=$(lxc storage volume list $POOL_NAME | grep -w $VOLUME_NAME)
   if ! [ "$volume_exist" ]; then
     lxc storage volume create $POOL_NAME $VOLUME_NAME
     echo "created"
