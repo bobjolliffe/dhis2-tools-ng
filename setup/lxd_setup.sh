@@ -4,7 +4,13 @@ set -e
 apt-get -y update
 apt-get -y upgrade
 
-snap install lxd --channel=4.0/stable
+# remove lxd intalled with apt, usually lxd 3.0.3
+sudo apt -y remove --purge lxd
+sudo apt -y autoremove 
+
+# install lxd with snap
+# snap install lxd --channel=4.0/stable
+snap install lxd 
 
 # initializing lxd system
 cat configs/lxd_preseed | sudo lxd init --preseed
