@@ -131,6 +131,11 @@ sudo lxc exec postgres -- psql -c 'select name,id from dataelement limit 5' hmis
 ```
 Note the "--" is necessary.  It tells lxc exec that everything following (including commandline switches like -c in this case) are to be interpreted as part of the remote command.
 
+## Deleting an Instance
+In case you want to delete a DHIS2 instance called `hmis` use the following command:
+
+`sudo dhis2-delete-instance hmis postgres`
+
 ## Post install tasks
 
 ### Database
