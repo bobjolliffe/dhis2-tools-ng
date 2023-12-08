@@ -31,6 +31,9 @@ for FILE in $(find etc/*); do
   fi
 done
 
+# copy credentials file
+cp etc/.credentials.json /usr/local/etc/dhis/
+
 # copy glowroot-admin.json to /usr/local/etc/dhis/
 if [ -f configs/glowroot-admin.json ];
 then

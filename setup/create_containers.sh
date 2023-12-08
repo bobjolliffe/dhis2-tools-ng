@@ -23,10 +23,10 @@ if [[ $UFW_STATUS == "inactive" ]]; then
 fi
 
 # Make sure ufw is not blocking the lxd traffic
-ufw allow in on lxdbr0
+sudo ufw allow in on lxdbr0
 sudo ufw allow out on lxdbr0
 
-apt-get -y install unzip auditd jq
+sudo apt-get -y install unzip auditd jq apache2-utils
 
 # Parse json config file
 source parse_config.sh
@@ -44,6 +44,12 @@ for CONTAINER in $CONTAINERS; do
   NAME=$(echo $CONTAINER | jq -r .name)
   IP=$(echo $CONTAINER | jq -r .ip)
   TYPE=$(echo $CONTAINER | jq -r .type)
+
+  container_exist=$(lxc list -c n | grep $NAME)
+  if ! [ -z "$container_exist" ]; then
+    echo "Container $NAME already exist, skipping"
+    continue
+  fi
 
   echo "Creating $NAME of type $TYPE"
   lxc init ubuntu:$GUESTOS $NAME
