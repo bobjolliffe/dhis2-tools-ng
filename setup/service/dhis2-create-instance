@@ -7,7 +7,7 @@
 #
 #   Script to deploy a dhis2 instance
 
-PROG=`basename $0`
+PROG=$(basename "$0")
 CREATEDB=true
 TOMCAT_SETUP=/usr/local/etc/dhis/tomcat_setup
 GLOWROOT_SETUP=/usr/local/etc/dhis/glowroot-admin.json
@@ -28,18 +28,18 @@ usage() {
   echo "Options:"
   echo "  -h, --help       Display this help message"
   echo "  -n               Do NOT create database for instance"
-  echo "  -j <8|11>        Java version. Default is 8"
+  echo "  -j <8|11|17>        Java version. Default is 11"
   exit 1
 }
 
 # main entry point
-echo checking options
+echo "Checking options..."
 while getopts p:nhj: opt
 do
   case $opt in
     n) CREATEDB=false ;;
     j) JAVA_VERSION="${OPTARG}"
-       [[ $JAVA_VERSION == "8" || $JAVA_VERSION == "11" ]] || usage
+       [[ $JAVA_VERSION == "8" || $JAVA_VERSION == "11" || $JAVA_VERSION == "17" ]] || usage
        ;;
     h) usage;;
     *) echo "Error: Unknown parameter '$OPTARG'."
@@ -113,8 +113,9 @@ then
     echo "User $NAME already exists"
     exit 1
   fi
-
-  echo "Creating database $NAME on $PG"
+  echo "##################################"
+  echo "Creating database '$NAME' on '$PG'"
+  echo "##################################"
   PASSWD=$(openssl rand -hex 20)
   lxc exec $PG -- createuser $NAME
   lxc exec $PG -- psql -c "ALTER user $NAME with PASSWORD '$PASSWD'" postgres 
@@ -134,7 +135,9 @@ then
       lxc exec $PG ufw allow proto tcp from $IP to any port 5432
 fi
 
-echo "Creating tomcat container $NAME"
+echo "##################################"
+echo "Creating tomcat container '$NAME'"
+echo "##################################"
 
 lxc init ubuntu:$GUESTOS $NAME
 
@@ -153,7 +156,7 @@ done
 
 # Added PROXY_IP to tomcat_setup
 sed "s/PROXY_IP/${PROXY_IP}/" $TOMCAT_SETUP > /tmp/tomcat_setup
-sed -i "s/JAVA_VERSION/${JAVA_VERSION}/" /tmp/tomcat_setup
+sed -i "s/JAVA_VERSION/${JAVA_VERSION}/g" /tmp/tomcat_setup
 cat /tmp/tomcat_setup | lxc exec $NAME -- bash
 rm /tmp/tomcat_setup
 
@@ -168,7 +171,11 @@ if [[ $APM == "glowroot" ]];
 then
   sed -r '/glowroot.jar/ s/..(.*)/\1/' /usr/local/etc/dhis/tomcat_default > /tmp/tomcat9
   lxc file push /tmp/tomcat9 $NAME/etc/default/tomcat9
-  lxc exec $NAME -- wget -P /opt https://github.com/glowroot/glowroot/releases/download/v0.13.6/glowroot-0.13.6-dist.zip 
+  if [[ $JAVA_VERSION == "17" ]]; then
+    lxc exec $NAME -- wget -P /opt https://github.com/glowroot/glowroot/releases/download/v0.14.2/glowroot-0.14.2-dist.zip 
+  else
+    lxc exec $NAME -- wget -P /opt https://github.com/glowroot/glowroot/releases/download/v0.13.6/glowroot-0.13.6-dist.zip 
+  fi
   lxc exec $NAME -- unzip -o /opt/glowroot-0.13.6-dist.zip -d /opt
   sed "s/XXXX/${NAME}/" $GLOWROOT_SETUP > /tmp/glowroot-admin.json
   lxc file push /tmp/glowroot-admin.json $NAME/opt/glowroot/admin.json
