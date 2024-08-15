@@ -24,7 +24,6 @@ mkdir /etc/systemd/system/tomcat9.service.d
 #
 cat << EOF > /etc/systemd/system/tomcat9.service.d/override.conf
 [Service]
-Environment=JAVA_HOME=/usr/lib/jvm/java-JAVA_VERSION-openjdk-amd64/
 ReadWritePaths=/opt/dhis2
 ReadWritePaths=/opt/glowroot
 ReadWritePaths=/var/log/tomcat9

@@ -11,6 +11,7 @@ PROG=$(basename "$0")
 CREATEDB=true
 TOMCAT_SETUP=/usr/local/etc/dhis/tomcat_setup
 GLOWROOT_SETUP=/usr/local/etc/dhis/glowroot-admin.json
+GLOWROOT_VERSION=0.14.2
 
 APM=$(cat /usr/local/etc/dhis/containers.json| jq -r .apm)
 PROXY=$(cat /usr/local/etc/dhis/containers.json| jq -r .proxy)
@@ -21,7 +22,7 @@ GUESTOS=20.04
 
 ###############################################################
 usage() {
-  echo "Usage: $PROG [options] <instance> [<ip>] [<postgres_container>]"
+  echo "Usage: $PROG [options] <instance> -j [<java_version>] [<ip>] [<postgres_container>]"
   echo "  instance: name of the dhis2 instance to create"
   echo "  ip: the ip address of the container (default picks next free IP ending in .10 to .19"
   echo "  postgres_container: the name of postgresql container (default postgres)"
@@ -113,9 +114,9 @@ then
     echo "User $NAME already exists"
     exit 1
   fi
-  echo "##################################"
-  echo "Creating database '$NAME' on '$PG'"
-  echo "##################################"
+  echo "########################################"
+  echo "Creating database $NAME on $PG"
+  echo "########################################"
   PASSWD=$(openssl rand -hex 20)
   lxc exec $PG -- createuser $NAME
   lxc exec $PG -- psql -c "ALTER user $NAME with PASSWORD '$PASSWD'" postgres 
@@ -135,9 +136,9 @@ then
       lxc exec $PG ufw allow proto tcp from $IP to any port 5432
 fi
 
-echo "##################################"
-echo "Creating tomcat container '$NAME'"
-echo "##################################"
+echo "####################################"
+echo "Creating tomcat container $NAME"
+echo "####################################"
 
 lxc init ubuntu:$GUESTOS $NAME
 
@@ -156,7 +157,7 @@ done
 
 # Added PROXY_IP to tomcat_setup
 sed "s/PROXY_IP/${PROXY_IP}/" $TOMCAT_SETUP > /tmp/tomcat_setup
-sed -i "s/JAVA_VERSION/${JAVA_VERSION}/g" /tmp/tomcat_setup
+sed -i "s/JAVA_VERSION/${JAVA_VERSION}/" /tmp/tomcat_setup
 cat /tmp/tomcat_setup | lxc exec $NAME -- bash
 rm /tmp/tomcat_setup
 
@@ -170,13 +171,20 @@ fi
 if [[ $APM == "glowroot" ]]; 
 then
   sed -r '/glowroot.jar/ s/..(.*)/\1/' /usr/local/etc/dhis/tomcat_default > /tmp/tomcat9
+  sed -i "s/JAVA_VERSION/${JAVA_VERSION}/" /tmp/tomcat9
   lxc file push /tmp/tomcat9 $NAME/etc/default/tomcat9
+
   if [[ $JAVA_VERSION == "17" ]]; then
-    lxc exec $NAME -- wget -P /opt https://github.com/glowroot/glowroot/releases/download/v0.14.2/glowroot-0.14.2-dist.zip 
+    GLOWROOT_DOWNLOAD_URL="https://github.com/glowroot/glowroot/releases/download/v$GLOWROOT_VERSION/glowroot-$GLOWROOT_VERSION-dist.zip"
+    GLOWROOT_ZIP="glowroot-$GLOWROOT_VERSION-dist.zip"
   else
-    lxc exec $NAME -- wget -P /opt https://github.com/glowroot/glowroot/releases/download/v0.13.6/glowroot-0.13.6-dist.zip 
+    GLOWROOT_DOWNLOAD_URL="https://github.com/glowroot/glowroot/releases/download/v0.13.6/glowroot-0.13.6-dist.zip"
+    GLOWROOT_ZIP="glowroot-0.13.6-dist.zip"
   fi
-  lxc exec $NAME -- unzip -o /opt/glowroot-0.13.6-dist.zip -d /opt
+
+  # Download the appropriate Glowroot version
+  lxc exec $NAME -- wget -P /opt $GLOWROOT_DOWNLOAD_URL
+  lxc exec $NAME -- unzip -o /opt/$GLOWROOT_ZIP -d /opt
   sed "s/XXXX/${NAME}/" $GLOWROOT_SETUP > /tmp/glowroot-admin.json
   lxc file push /tmp/glowroot-admin.json $NAME/opt/glowroot/admin.json
   lxc exec $NAME -- chown -R tomcat.tomcat /opt/
@@ -298,4 +306,3 @@ else
   echo "Error: Proxy type not supported"
   exit 1
 fi
-
