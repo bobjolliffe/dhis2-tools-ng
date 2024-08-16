@@ -7,10 +7,11 @@
 #
 #   Script to deploy a dhis2 instance
 
-PROG=`basename $0`
+PROG=$(basename "$0")
 CREATEDB=true
 TOMCAT_SETUP=/usr/local/etc/dhis/tomcat_setup
 GLOWROOT_SETUP=/usr/local/etc/dhis/glowroot-admin.json
+GLOWROOT_VERSION=0.14.2
 
 APM=$(cat /usr/local/etc/dhis/containers.json| jq -r .apm)
 PROXY=$(cat /usr/local/etc/dhis/containers.json| jq -r .proxy)
@@ -21,25 +22,25 @@ GUESTOS=20.04
 
 ###############################################################
 usage() {
-  echo "Usage: $PROG [options] <instance> [<ip>] [<postgres_container>]"
+  echo "Usage: $PROG [options] <instance> -j [<java_version>] [<ip>] [<postgres_container>]"
   echo "  instance: name of the dhis2 instance to create"
   echo "  ip: the ip address of the container (default picks next free IP ending in .10 to .19"
   echo "  postgres_container: the name of postgresql container (default postgres)"
   echo "Options:"
   echo "  -h, --help       Display this help message"
   echo "  -n               Do NOT create database for instance"
-  echo "  -j <8|11>        Java version. Default is 8"
+  echo "  -j <8|11|17>        Java version. Default is 11"
   exit 1
 }
 
 # main entry point
-echo checking options
+echo "Checking options..."
 while getopts p:nhj: opt
 do
   case $opt in
     n) CREATEDB=false ;;
     j) JAVA_VERSION="${OPTARG}"
-       [[ $JAVA_VERSION == "8" || $JAVA_VERSION == "11" ]] || usage
+       [[ $JAVA_VERSION == "8" || $JAVA_VERSION == "11" || $JAVA_VERSION == "17" ]] || usage
        ;;
     h) usage;;
     *) echo "Error: Unknown parameter '$OPTARG'."
@@ -113,8 +114,9 @@ then
     echo "User $NAME already exists"
     exit 1
   fi
-
+  echo "########################################"
   echo "Creating database $NAME on $PG"
+  echo "########################################"
   PASSWD=$(openssl rand -hex 20)
   lxc exec $PG -- createuser $NAME
   lxc exec $PG -- psql -c "ALTER user $NAME with PASSWORD '$PASSWD'" postgres 
@@ -134,7 +136,9 @@ then
       lxc exec $PG ufw allow proto tcp from $IP to any port 5432
 fi
 
+echo "####################################"
 echo "Creating tomcat container $NAME"
+echo "####################################"
 
 lxc init ubuntu:$GUESTOS $NAME
 
@@ -167,9 +171,20 @@ fi
 if [[ $APM == "glowroot" ]]; 
 then
   sed -r '/glowroot.jar/ s/..(.*)/\1/' /usr/local/etc/dhis/tomcat_default > /tmp/tomcat9
+  sed -i "s/JAVA_VERSION/${JAVA_VERSION}/" /tmp/tomcat9
   lxc file push /tmp/tomcat9 $NAME/etc/default/tomcat9
-  lxc exec $NAME -- wget -P /opt https://github.com/glowroot/glowroot/releases/download/v0.13.6/glowroot-0.13.6-dist.zip 
-  lxc exec $NAME -- unzip -o /opt/glowroot-0.13.6-dist.zip -d /opt
+
+  if [[ $JAVA_VERSION == "17" ]]; then
+    GLOWROOT_DOWNLOAD_URL="https://github.com/glowroot/glowroot/releases/download/v$GLOWROOT_VERSION/glowroot-$GLOWROOT_VERSION-dist.zip"
+    GLOWROOT_ZIP="glowroot-$GLOWROOT_VERSION-dist.zip"
+  else
+    GLOWROOT_DOWNLOAD_URL="https://github.com/glowroot/glowroot/releases/download/v0.13.6/glowroot-0.13.6-dist.zip"
+    GLOWROOT_ZIP="glowroot-0.13.6-dist.zip"
+  fi
+
+  # Download the appropriate Glowroot version
+  lxc exec $NAME -- wget -P /opt $GLOWROOT_DOWNLOAD_URL
+  lxc exec $NAME -- unzip -o /opt/$GLOWROOT_ZIP -d /opt
   sed "s/XXXX/${NAME}/" $GLOWROOT_SETUP > /tmp/glowroot-admin.json
   lxc file push /tmp/glowroot-admin.json $NAME/opt/glowroot/admin.json
   lxc exec $NAME -- chown -R tomcat.tomcat /opt/
@@ -291,4 +306,3 @@ else
   echo "Error: Proxy type not supported"
   exit 1
 fi
-
